@@ -9,14 +9,17 @@
 | an embed whose name more than one file in the vault has, so Obsidian may open another one | error |
 | a pick-one question without exactly one `[x]`, or a question mixing `[x]` and `[T]`/`[F]` | error |
 | a quiz part other than Prior and Learned, or a quiz file without a section | error |
+| a quiz tag, like `[[lecture_1#Learning]]`, that names no section of the page | error |
 | two blocks of a page with the same id, e.g. a section embedded twice | error |
 | math that does not render: unclosed `$`, unbalanced braces, an unknown command | error |
 | a file under personalization_data/ that git tracks | error |
 | an embedded section without a quiz file, or with an empty Prior part, which the book cannot adapt | warning |
+| a question of the page's own quiz without a tag, whose miss rewrites nothing | warning |
 | a chapter.md the outline does not link | warning |
 
 Every page is checked: each chapter.md, and each other file the outline links, a one-file page. The
-quiz files of inline sections, the headings of a page with their text, are checked when they exist.
+quiz files of inline sections, the headings of a page with their text, are checked when they exist,
+and so is the page's own quiz file, `<page stem>.quiz.md`.
 
 Errors make the exit code 1, and warnings too with --strict.
 """
@@ -122,7 +125,9 @@ def check_chapters(vault: Path, files: list[Path]) -> list[Problem]:
         for name, section in doc.sections.items():
             # An inline section adapts without a quiz too, through the tutor and the text inputs
             if doc.quiz_path(name).is_file() or not section.inline:
-                problems += check_quiz(doc.quiz_path(name), section.path)
+                problems += check_quiz(doc.quiz_path(name), section.path, doc)
+        if doc.is_page(doc.stem) and doc.page_quiz_path.is_file():
+            problems += check_quiz(doc.page_quiz_path, page, doc, page_quiz=True)
         problems += _orphan_quizzes(doc)
     return problems
 
@@ -138,16 +143,18 @@ def _embeds(page: Path) -> list[tuple[int, str]]:
 
 def _orphan_quizzes(doc: ChapterDoc) -> list[Problem]:
     """Quiz files of the page whose name no section has: `*.quiz.md` in a chapter folder, and
-    `<stem>.*.quiz.md` next to a one-file page."""
+    `<stem>.*.quiz.md` next to a one-file page. The page's own quiz, chapter.quiz.md, is no orphan."""
     prefix = doc.quiz_path("").name.removesuffix(QUIZ_SUFFIX)
     return [
         Problem(path, 1, "no section of the page has this name, so the quiz never shows")
         for path in sorted(doc.folder.glob(f"{prefix}*{QUIZ_SUFFIX}"))
         if path.name.removeprefix(prefix).removesuffix(QUIZ_SUFFIX) not in doc.sections
+        and not (doc.is_page(doc.stem) and path == doc.page_quiz_path)
     ]
 
 
-def check_quiz(path: Path, section_path: Path) -> list[Problem]:
+def check_quiz(path: Path, section_path: Path, doc: ChapterDoc, page_quiz: bool = False) -> list[Problem]:
+    """The quiz file of a section, or with `page_quiz` of the page, whose tags must name sections of `doc`."""
     if not path.is_file():
         return [
             Problem(section_path, 1, f"no {path.name}, so the book cannot test or adapt this section", warning=True)
@@ -160,6 +167,14 @@ def check_quiz(path: Path, section_path: Path) -> list[Problem]:
     if not quiz.prior and not quiz.learned:
         problems.append(Problem(path, 1, "no questions, so only the tutor can adapt this section", warning=True))
     for parsed in (quiz.prior or []) + (quiz.learned or []):
+        problems += [
+            Problem(path, parsed.line, f"the tag [[{link}]] names no section of {doc.page.name}")
+            for link in parsed.links if doc.link_section(link) is None
+        ]
+        if page_quiz and not parsed.links:
+            problems.append(Problem(
+                path, parsed.line, "has no tag, so a miss rewrites no section and only goes to the notes", warning=True,
+            ))
         marks = parsed.marks
         if not marks:
             continue

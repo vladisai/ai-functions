@@ -5,10 +5,12 @@
       random-variables.md            a section the book rewrites for the reader
       random-variables.quiz.md       its quizzes, the prior one before it and the learned one after it
       symbols-at-a-glance.quiz.md    the quizzes of an inline section of chapter.md
+      chapter.quiz.md                the page's own quiz
       agent.md                       hints for the chat agent and the rewrites
       reference.md                   source material the chat agent can read
     content/lectures/
       lecture_1.md                   a one-file page, read the same way as chapter.md
+      lecture_1.quiz.md              the page's own quiz
       lecture_1.learning.quiz.md     the quizzes of its section "Learning"
 
 A link in the outline to a chapter.md is a chapter folder, and a link to any other file a one-file
@@ -35,6 +37,14 @@ Every section, embedded or inline, has a prior quiz slot before it and a learned
 slot without questions shows nothing. The quiz file is `<name>.quiz.md` in a chapter folder, and
 `<page stem>.<name>.quiz.md` next to a one-file page.
 
+The page has quiz slots of its own, from `<page stem>.quiz.md`, i.e. chapter.quiz.md or
+lecture_1.quiz.md: `<stem>.prior`, the background check, right after the title block (else first),
+and `<stem>.learned` at the end. When that file exists no inline section takes the stem's name.
+Without it a section may, like the preface's only section, and then its slots stand for the page's.
+A question's tags, the wikilinks that end it, name the sections it is about: `[[lecture_1#Learning]]`
+a heading of the page, matched by slug, and `[[random-variables]]` an embedded section (see
+`link_section`).
+
 A section file has a `topics` property, then a `# Heading`, then its starting text.
 """
 
@@ -45,6 +55,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from quicklearn.vault.frontmatter import split_front_matter, topics_of
+from quicklearn.vault.links import split_target
 from quicklearn.vault.quiz_md import QuizFile, parse_quiz
 
 CHAPTER_FILE = "chapter.md"
@@ -80,7 +91,7 @@ class Block:
     title: str = ""
     level: int = 1
     text: str = ""  # fixed: the markdown; text_input: the prompt
-    section: str = ""  # section, prior, learned: the section's name
+    section: str = ""  # section, prior, learned: the section's name, or the page's stem for its own quiz
 
 
 @dataclass
@@ -101,14 +112,49 @@ class ChapterDoc:
         return self.page.name == CHAPTER_FILE
 
     @property
+    def stem(self) -> str:
+        """The name of the page's own quiz: chapter, or the one-file page's stem like lecture_1."""
+        return self.page.stem
+
+    @property
     def agent_notes(self) -> str:
         path = self.folder / AGENT_FILE
         return path.read_text() if path.is_file() else ""
 
+    @property
+    def page_quiz_path(self) -> Path:
+        """The vault's file of the page's own quiz, e.g. chapter.quiz.md or lecture_1.quiz.md."""
+        return self.folder / f"{self.stem}{QUIZ_SUFFIX}"
+
+    def is_page(self, name: str) -> bool:
+        """True if `name` is the page's own quiz slots rather than a section's."""
+        return name == self.stem and name not in self.sections
+
     def quiz_path(self, name: str) -> Path:
-        """The vault's quiz file of a section."""
-        prefix = "" if self.is_chapter_folder else f"{self.page.stem}."
+        """The vault's quiz file of a section, or of the page for its stem."""
+        if self.is_page(name):
+            return self.page_quiz_path
+        prefix = "" if self.is_chapter_folder else f"{self.stem}."
         return self.folder / f"{prefix}{name}{QUIZ_SUFFIX}"
+
+    def link_section(self, link: str) -> str | None:
+        """The section a quiz tag names, or None. "lecture_1#Learning" is the page's heading whose
+        slug is learning, and "random-variables" the embedded section random-variables."""
+        path, anchor = split_target(link)
+        path = path.rsplit("/", 1)[-1]
+        section = self.sections.get(path)
+        if section is not None and not section.inline:
+            return path
+        if not anchor or path not in ("", self.stem):
+            return None
+        wanted = slug(anchor)
+        found = next((n for n, s in self.sections.items() if s.inline and slug(s.title) == wanted), None)
+        return found or (wanted if wanted in self.sections else None)
+
+    def tag(self, name: str) -> str:
+        """The tag of a section, the inverse of link_section."""
+        section = self.sections[name]
+        return f"{self.stem}#{section.title}" if section.inline else name
 
     def quiz_file(self, name: str) -> QuizFile | None:
         path = self.quiz_path(name)
@@ -203,11 +249,14 @@ def parse_page(page: Path, vault: Path) -> ChapterDoc:
         page.parent.name if is_chapter else page.stem
     )
     doc = ChapterDoc(page, page_key(page.relative_to(vault).as_posix()), str(title), [])
-    # Inline sections take names that no embed or text input has, so every block id is unique
+    # Inline sections take names that no embed, text input or the page's own quiz has, so every block id is unique
     taken = {m.group(1).strip() for _, kind, m in tokens if kind == "embed"}
     taken |= {slug(m.group(1)) for _, kind, m in tokens if kind == "text_input"}
+    if doc.page_quiz_path.is_file():
+        taken.add(doc.stem)
     placed: set[str] = set()
     fixed_count = 0
+    title_block: int | None = None  # the index of the title's fixed block
 
     def with_footnotes(body: str) -> str:
         """The body with the definitions of the footnotes it cites first on the page."""
@@ -224,7 +273,7 @@ def parse_page(page: Path, vault: Path) -> ChapterDoc:
         doc.blocks.append(Block("learned", f"{name}.learned", section.title, section.level, section=name))
 
     def flush(heading: tuple[int, str] | None, chunk: list[str], is_title: bool) -> None:
-        nonlocal fixed_count
+        nonlocal fixed_count, title_block
         body = with_footnotes("\n".join(chunk).strip("\n"))
         if heading is not None and body.strip() and not is_title:
             base = slug(heading[1]) or "section"
@@ -237,6 +286,8 @@ def parse_page(page: Path, vault: Path) -> ChapterDoc:
         elif heading is not None or body.strip():
             fixed_count += 1
             level, title = heading or (1, "")
+            if is_title:
+                title_block = len(doc.blocks)
             doc.blocks.append(Block("fixed", f"{FIXED_PREFIX}{fixed_count}", title, level, body))
 
     heading: tuple[int, str] | None = None
@@ -268,4 +319,9 @@ def parse_page(page: Path, vault: Path) -> ChapterDoc:
             doc.blocks.append(Block("text_input", slug(match.group(1)), match.group(1), text="\n".join(prompt)))
         i += 1
     flush(heading, chunk, title_fixed and heading_at == title_at)
+    # The page's own quiz: the background check after the title, and a learned quiz at the end
+    if doc.is_page(doc.stem):
+        at = 0 if title_block is None else title_block + 1
+        doc.blocks.insert(at, Block("prior", f"{doc.stem}.prior", doc.title, section=doc.stem))
+        doc.blocks.append(Block("learned", f"{doc.stem}.learned", doc.title, section=doc.stem))
     return doc

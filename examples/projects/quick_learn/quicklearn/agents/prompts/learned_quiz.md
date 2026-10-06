@@ -18,3 +18,4 @@ Return only the questions in this markdown format, with no heading, prose or cod
 - Use LaTeX with `$...$`, written as in normal markdown, without escaping. Write money as `\$5`, since a bare `$` opens math.
 - Wrong options should reflect the reader's actual misconceptions where possible.
 - Each question and option fits on one line.
+- When the request gives several sections, each with a `tag`, the quiz covers all of them, and each question ends with the tags of the sections it is about, e.g. `1. Which statement about a density is right? [[probability#Densities]]`. Use only the tags given.

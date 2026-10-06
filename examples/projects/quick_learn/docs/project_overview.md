@@ -45,7 +45,8 @@ content/
   outline.md                       the drawer: groups, parts and wikilinks to the pages
   lectures/
     lecture_1.md                   a one-file page: each heading with text under it is a section
-    lecture_1.*.quiz.md            quizzes of its sections, e.g. lecture_1.learning.quiz.md
+    lecture_1.quiz.md              the page's own quiz: `# Prior`, the background check after the title
+    lecture_1.*.quiz.md            quizzes of its sections, e.g. a group's learned quiz in its last section
     lecture_2.md, lecture_3.md     two more one-file pages, with their .quiz.md files
     lecture_2/, lecture_3/         their figures: svg and png, and kv_cache_stepper.html in an iframe
     agent.md                       hints for the tutor and the rewrites of the lectures
@@ -68,9 +69,14 @@ any other file makes a one-file page, which is read the same way as chapter.md, 
 `_TEXT_INPUT_:` work in it too. In both, an embed is a section. Every heading with text under it
 is a section too, named by the slug of its title. A heading with nothing under it and the text
 before the first heading stay fixed. A one-file page keeps its quizzes next to it as
-`<page>.<name>.quiz.md`. A chapter folder keeps them as `<name>.quiz.md`. The root URL `/` opens
-the first chapter folder. The formats are in the docstrings of `vault/outline.py`,
-`vault/chapter.py` and `vault/quiz_md.py`.
+`<page>.<name>.quiz.md`. A chapter folder keeps them as `<name>.quiz.md`. The page's own quiz is
+`<page>.quiz.md`, or `chapter.quiz.md`. Its Prior shows after the title as "Checking your
+background", and its Learned at the page's end. A question ends with tags, the sections it is
+about: `[[lecture_2#Stochastic dynamical systems]]` for a heading of the page, `[[random-variables]]`
+for an embed. The reader never sees them. The checker fails on a tag that names no section, and
+warns on an untagged question of the page's own quiz. The root URL `/` opens the first chapter
+folder. The formats are in the docstrings of `vault/outline.py`, `vault/chapter.py` and
+`vault/quiz_md.py`.
 
 A page links its figures relative to its own folder, as Obsidian does, so lecture_2.md has
 `![alt](lecture_2/fig.svg)`. The forms `![[lecture_2/fig.svg]]` and `<iframe src="lecture_2/x.html">`
@@ -81,12 +87,13 @@ is. A section's HTML is sanitized unless its only HTML is iframes of `/vault/` f
 
 | Lecture | Quiz files | Figures |
 |---|---|---|
-| `lecture_1.md` | 12 | none |
-| `lecture_2.md` | 10 | 15 svg and the KV cache stepper |
-| `lecture_3.md` | 18 | 24 svg and png |
+| `lecture_1.md` | 4: a background check of 6 questions and 3 learned quizzes | none |
+| `lecture_2.md` | 4: a background check of 6 questions and 3 learned quizzes | 15 svg and the KV cache stepper |
+| `lecture_3.md` | 5: a background check of 6 questions and 4 learned quizzes | 24 svg and png |
 
-Every lecture is an adaptive page with prior and learned quizzes per section, like the chapters of
-the book.
+Every lecture is an adaptive page with one background check and learned quizzes that each cover a
+group of sections. A group's learned quiz is in the quiz file of its last section. The probability
+chapter has a quiz file for each section instead.
 
 ## The reader folder
 
@@ -150,16 +157,19 @@ The adapter's rules apply to the quizzes of every section, inline or embedded, o
 |---|---|
 | Prior quiz with gaps | the section, around what they missed, and a learned quiz after it |
 | Prior quiz all right | the section, condensed, unless it is already compact |
-| Learned quiz with gaps | the section again, and a fresh learned quiz |
+| Page prior with gaps | each section tagged on a missed question, in parallel, and no quiz |
+| Page prior all right | nothing |
+| Learned quiz with gaps | the tagged sections of the missed questions, else its own, then a fresh learned quiz in the same slot on every section it tags |
 | Text input | every section of its page, when the note step says the answer calls for it |
 | Chat | the sections the tutor names through rewrite_section |
 | Chat, add_quiz | a prior or learned quiz for the section the tutor names, and not its text |
 
-A rewrite opens a new version folder and streams the section into its file. Each block of the
-page polls its file every 2 s, so the page starts changing a few seconds after a submit, without
-closing an open quiz. Every request carries reader.md and the chapter's notes.md, so a rewrite of
-Expectation knows what the reader missed in Random Variables. Rewrites put
-`<!-- note: ... -->` markers in the text. The page shows them in the right margin.
+A missed untagged question of the page's own quiz only goes to notes.md. An untagged question of a
+section's quiz is about that section. A rewrite opens a new version folder and streams the section
+into its file. Each block of the page polls its file every 2 s, so the page starts changing a few
+seconds after a submit, without closing an open quiz. Every request carries reader.md and the
+chapter's notes.md, so a rewrite of Expectation knows what the reader missed in Random Variables.
+Rewrites put `<!-- note: ... -->` markers in the text. The page shows them in the right margin.
 
 ### The chat tutor
 
@@ -170,8 +180,9 @@ Expectation knows what the reader missed in Random Variables. Rewrites put
   notes.md, `search_arxiv`, and `web_search` with a Tavily key. It has no coordinator tools.
 - `add_quiz(name, request, part="learned")` writes a quiz for any section into a new version
   without rewriting its text. With "prior" the quiz goes before the section. With "learned" it
-  goes after it. Like `rewrite_section`, it runs in the background and returns at once. The quiz
-  appears in its slot when it is written.
+  goes after it. With the page's name, e.g. `add_quiz("lecture_2", ..., part="prior")`, it writes
+  the page's own quiz on all its sections. Like `rewrite_section`, it runs in the background and
+  returns at once. The quiz appears in its slot when it is written.
 - The tutor is spawned once per Book on an `InMemoryCoordinator` with a `LocalWorker`. They live on an
   asyncio loop in a thread of their own, so `ChatAgent.handle(message, chapter)` is a plain
   blocking call, which the chat panel makes through `run.io_bound`. Messages are answered one at a
@@ -202,7 +213,7 @@ These timings were measured in Chrome on Sonnet 5.5 on Bedrock:
 uv run pytest tests -q
 ```
 
-The 186 tests take about 3 s. They make no model calls, since `conftest.py` fails any test that
+The 226 tests take about 3 s. They make no model calls, since `conftest.py` fails any test that
 reaches `llm.client`. Its `FakeLLM` answers `llm.stream_text` and `llm.complete` by prompt name. They
 work on a tmp vault or a copy of `content/`, never on the real reader folders.
 
@@ -213,6 +224,7 @@ work on a tmp vault or a copy of `content/`, never on the real reader folders.
 | `test_reader_store.py` | the reader folder, reader.md and notes.md, wipe, the demo readers |
 | `test_versions.py`, `test_chapter_state.py` | version folders, stale and empty sections, a reload |
 | `test_adapter.py` | the rewrite plans, streaming into one version, stop on Reset |
+| `test_page_quiz.py` | the page's own quiz and quiz tags: blocks, tag resolution, plans, a group quiz, a submit |
 | `test_note_step.py` | reading the note step's reply |
 | `test_book.py` | each reader action on a real Book |
 | `test_chat_tools.py` | `read_vault_file`, which keeps the tutor out of the reader folders |

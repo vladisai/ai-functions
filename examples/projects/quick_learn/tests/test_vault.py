@@ -14,13 +14,19 @@ def slots(name: str) -> list[tuple[str, str]]:
     return [("prior", f"{name}.prior"), ("section", name), ("learned", f"{name}.learned")]
 
 
+def page_quiz(stem: str, *inner: tuple[str, str], title: int = 0) -> list[tuple[str, str]]:
+    """The blocks with the page's own quiz: its prior after the title, at index `title`, its learned at the end."""
+    inner = list(inner)
+    return [*inner[:title], ("prior", f"{stem}.prior"), *inner[title:], ("learned", f"{stem}.learned")]
+
+
 def test_small_chapter_blocks_in_order(small_vault: Path):
     doc = parse_chapter(small_vault / "ch", small_vault)
     assert doc.key == "ch" and doc.title == "Small Chapter" and doc.is_chapter_folder
-    assert blocks(doc) == [
-        ("fixed", "fixed-1"), *slots("welcome"), ("text_input", "about-you"),
-        *slots("alpha"), *slots("beta"), *slots("symbols"),
-    ]
+    assert blocks(doc) == page_quiz(
+        "chapter", ("fixed", "fixed-1"), *slots("welcome"), ("text_input", "about-you"),
+        *slots("alpha"), *slots("beta"), *slots("symbols"), title=1,
+    )
     assert list(doc.sections) == ["welcome", "alpha", "beta", "symbols"]
     assert [s.inline for s in doc.sections.values()] == [True, False, False, True]
     # The page's title heading and its byline stay as written
@@ -77,9 +83,10 @@ def test_an_inline_section_ends_at_a_text_input(make_vault):
     })
     doc = parse_chapter(vault / "ch", vault)
     # The text input took the slug ask, so the section is ask-2
-    assert [(b.kind, b.id) for b in doc.blocks] == [
-        ("fixed", "fixed-1"), *slots("ask-2"), ("text_input", "ask"), ("fixed", "fixed-2"), ("text_input", "q"),
-    ]
+    assert [(b.kind, b.id) for b in doc.blocks] == page_quiz(
+        "chapter", ("fixed", "fixed-1"), *slots("ask-2"), ("text_input", "ask"), ("fixed", "fixed-2"),
+        ("text_input", "q"), title=1,
+    )
     assert doc.sections["ask-2"].body == "Why we ask.\n"
 
 
@@ -104,7 +111,7 @@ def test_a_one_file_page(make_vault):
     })
     doc = parse_page(vault / "lectures" / "lecture_1.md", vault)
     assert (doc.key, doc.title, doc.is_chapter_folder) == ("lectures/lecture_1", "Lecture 1", False)
-    assert blocks(doc) == [("fixed", "fixed-1"), *slots("learning"), *slots("extra")]
+    assert blocks(doc) == page_quiz("lecture_1", ("fixed", "fixed-1"), *slots("learning"), *slots("extra"), title=1)
     assert doc.quiz_path("learning") == vault / "lectures" / "lecture_1.learning.quiz.md"
     assert doc.quiz_path("extra") == vault / "lectures" / "lecture_1.extra.quiz.md"
     assert [q.text for q in doc.quiz_file("learning").questions("prior")] == ["Pick one"]
@@ -118,7 +125,7 @@ def test_a_one_file_page(make_vault):
 
 def test_blank_text_makes_no_block(make_vault):
     vault = make_vault({"ch/chapter.md": "\n\n![[sec]]\n\n\n", "ch/sec.md": "# Sec\n"})
-    assert blocks(parse_chapter(vault / "ch", vault)) == slots("sec")
+    assert blocks(parse_chapter(vault / "ch", vault)) == page_quiz("chapter", *slots("sec"))
 
 
 def test_embeds(make_vault):
@@ -132,11 +139,11 @@ def test_embeds(make_vault):
     })
     doc = parse_chapter(vault / "ch", vault)
     # Every section has its quiz slots, with a quiz file or not; an embed inside text or of a heading stays text
-    assert blocks(doc) == [*slots("quizzed"), *slots("plain"), ("fixed", "fixed-1")]
-    assert doc.blocks[0] == Block("prior", "quizzed.prior", "Quizzed", 1, section="quizzed")
-    assert doc.blocks[4].level == 2
+    assert blocks(doc) == page_quiz("chapter", *slots("quizzed"), *slots("plain"), ("fixed", "fixed-1"))
+    assert doc.blocks[1] == Block("prior", "quizzed.prior", "Quizzed", 1, section="quizzed")
+    assert doc.blocks[5].level == 2
     assert doc.missing_embeds == [(3, "gone")]
-    assert "![[plain]]" in doc.blocks[6].text and "![[plain#Heading]]" in doc.blocks[6].text
+    assert "![[plain]]" in doc.blocks[7].text and "![[plain#Heading]]" in doc.blocks[7].text
 
 
 def test_text_input_takes_the_lines_under_it_as_prompt(make_vault):
@@ -145,7 +152,7 @@ def test_text_input_takes_the_lines_under_it_as_prompt(make_vault):
         "_TEXT_INPUT_:   Bare  \n"
     )})
     doc = parse_chapter(vault / "ch", vault)
-    first, fixed, bare = doc.blocks
+    _, first, fixed, bare, _ = doc.blocks
     assert (first.kind, first.id, first.title, first.text) == (
         "text_input", "what-brings-you-here", "What brings you here?", "First line.\nSecond line."
     )
@@ -215,7 +222,7 @@ def test_a_lecture_keeps_its_title_and_byline(make_vault):
     )})
     doc = parse_page(vault / "lectures" / "lecture_2.md", vault)
     assert doc.title == "Lecture 2: Agents"
-    assert [(b.kind, b.id) for b in doc.blocks] == [("fixed", "fixed-1"), *slots("agents-act"), *slots("later")]
+    assert blocks(doc) == page_quiz("lecture_2", ("fixed", "fixed-1"), *slots("agents-act"), *slots("later"), title=1)
     byline = "*Alessandro Achille, September 30, 2026*"
     assert (doc.blocks[0].title, doc.blocks[0].text) == ("Lecture 2: Agents", byline)
     assert list(doc.sections) == ["agents-act", "later"]
@@ -225,5 +232,6 @@ def test_a_page_with_only_its_title_heading_is_one_section(make_vault):
     vault = make_vault({"book/preface.md": "# Preface\n\nWhy this book.\n\nHow to read it.\n"})
     doc = parse_page(vault / "book" / "preface.md", vault)
     assert doc.title == "Preface"
-    assert [(b.kind, b.id) for b in doc.blocks] == slots("preface")
+    # Without a preface.quiz.md the section keeps the stem's name, and its slots stand for the page's
+    assert blocks(doc) == slots("preface")
     assert doc.sections["preface"].body == "Why this book.\n\nHow to read it.\n"

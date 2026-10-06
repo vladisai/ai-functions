@@ -168,7 +168,8 @@ def test_a_one_file_page_is_adaptive(book: Book, small_vault: Path):
     assert (page.key, page.title, page.doc.page) == ("page", "A Page", small_vault / "page.md")
     assert page.dir == book.store.dir / "page" and page.version_dir.name == "v_0"
     # Its only heading is its title, so the page is one section
-    assert page.section_names == ["a-page"] and [b.kind for b in page.doc.blocks] == ["prior", "section", "learned"]
+    assert page.section_names == ["a-page"]
+    assert [b.id for b in page.doc.blocks] == ["page.prior", "a-page.prior", "a-page", "a-page.learned", "page.learned"]
     # A page-file edit reloads the page
     (small_vault / "page.md").write_text("# A Page\n\n## Part\n\nMore.\n")
     bump_mtime(small_vault / "page.md")

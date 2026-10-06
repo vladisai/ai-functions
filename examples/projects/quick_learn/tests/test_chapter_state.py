@@ -40,8 +40,9 @@ def test_first_load_opens_an_empty_v0(chapter: ChapterState, store: ReaderStore)
 def test_sections_of_the_page(chapter: ChapterState):
     sections = {s.id: s for s in chapter.material.sections}
     assert list(sections) == [
-        "fixed-1", "welcome.prior", "welcome", "welcome.learned", "about-you", "alpha.prior", "alpha", "alpha.learned",
-        "beta.prior", "beta", "beta.learned", "symbols.prior", "symbols", "symbols.learned",
+        "fixed-1", "chapter.prior", "welcome.prior", "welcome", "welcome.learned", "about-you", "alpha.prior", "alpha",
+        "alpha.learned", "beta.prior", "beta", "beta.learned", "symbols.prior", "symbols", "symbols.learned",
+        "chapter.learned",
     ]
     assert (sections["welcome"].title, sections["welcome"].level) == ("Welcome", 1)
     # A section of this chapter links to its place on the page; other links need the book's routes
@@ -65,8 +66,9 @@ def test_links_to_other_pages(small_vault: Path, store: ReaderStore):
 
 
 def test_quizzes_and_text_inputs(chapter: ChapterState):
-    # Every section has both quiz slots, empty ones too
-    assert list(chapter.quizzes) == [f"{n}.{p}" for n in chapter.section_names for p in ("prior", "learned")]
+    # Every section has both quiz slots, empty ones too, and so does the page
+    slots = [f"{n}.{p}" for n in chapter.section_names for p in ("prior", "learned")]
+    assert list(chapter.quizzes) == ["chapter.prior", *slots, "chapter.learned"]
     assert chapter.quizzes["welcome.prior"].questions == [] == chapter.quizzes["symbols.learned"].questions
     assert [q.text for q in chapter.quizzes["alpha.prior"].questions] == ["Pick one"]
     assert chapter.quizzes["alpha.learned"].questions == []

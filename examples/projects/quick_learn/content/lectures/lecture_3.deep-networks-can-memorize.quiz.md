@@ -1,22 +1,22 @@
-# Prior
-
-1. By the information-theoretic bound, what does storing few bits about the data in the weights, compared with the number of samples, guarantee?
-   - [ ] The training error is zero
-   - [x] The test error is close to the training error
-   - [ ] The model can fit any labels
-   - [ ] The model has few parameters
-2. Evaluate these statements:
-   - [T] Random labels have no relation to the inputs, so a model that fits them has nothing to carry over to new samples.
-   - [T] With $N$ labeled samples, $N$ bits of weights are enough to store every label.
-
 # Learned
 
-1. Why is it a problem for the compression story that a network can fit random labels perfectly?
-   - [ ] It shows that the network cannot generalize on real labels
-   - [ ] It shows that SGD noise is too large to learn anything
-   - [x] It shows that the network has room to store everything, yet on real labels it generalizes anyway
-   - [ ] It shows that random labels carry more useful information than real labels
-2. Evaluate these statements:
-   - [T] Why deep networks generalize even though they can memorize is mostly an open problem.
-   - [T] One candidate explanation is that SGD finds flat minima, which are robust to noise in the weights and so cheap to describe.
-   - [F] The capacity of a network determines what it actually stores.
+1. In the information bottleneck $L = H(T \mid Z) + \beta I(Z; X)$, what happens to the best $Z$ as $\beta$ grows? [[lecture_3#The information bottleneck]]
+   - [ ] $Z$ keeps more information about the input, so the uncertainty about the task drops
+   - [x] $Z$ keeps less information about the input, even at the price of more uncertainty about the task
+   - [ ] $Z$ keeps all the information about the input, whatever the task
+   - [ ] Nothing changes, since $\beta$ only rescales the loss
+2. Under a uniform prior over lines, a fraction $1/64$ of the lines remain consistent with the samples. How many bits do the samples give about the classifier? [[lecture_3#Inductive learning and information]]
+   - [ ] 64 bits
+   - [x] 6 bits
+   - [ ] 1/64 bit
+   - [ ] 3 bits
+3. By the Xu and Raginsky bound, when is the test loss guaranteed to be close to the training loss? [[lecture_3#Compression implies generalization]]
+   - [ ] When the model has fewer parameters than there are samples
+   - [ ] When the training error is zero
+   - [ ] When the model stores every training label
+   - [x] When the information the weights store about the dataset, $I(W; D)$, is far smaller than the number of samples $N$
+4. Evaluate these statements: [[lecture_3#Compression implies generalization]] [[lecture_3#SGD noise limits information]] [[lecture_3#Deep networks can memorize]]
+   - [T] To compress the weights, what matters is how precisely they must be specified, not how many there are.
+   - [T] The weights at a flat minimum need fewer bits than at a sharp minimum, since the SGD noise does not kick $w$ out and a rough $w$ is enough.
+   - [F] Less SGD noise, as with a large batch, leads to flatter minima and better generalization.
+   - [F] A network that can fit random labels perfectly cannot generalize on real labels.

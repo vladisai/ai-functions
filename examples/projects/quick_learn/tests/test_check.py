@@ -100,6 +100,30 @@ def test_a_quiz_file_without_questions_is_a_warning(tmp_path):
     assert main([str(vault), "--strict"]) == 1
 
 
+def test_quiz_tags(tmp_path):
+    page_quiz = (
+        "# Prior\n\n"
+        "1. Tagged [[ch/chapter#Inline]] [[sec]]\n   - [x] a\n   - [ ] b\n"
+        "2. Untagged\n   - [x] a\n   - [ ] b\n"
+        "3. Wrong tag [[chapter#Nowhere]]\n   - [x] a\n   - [ ] b\n"
+    )
+    vault = write(tmp_path, {
+        "outline.md": "- [[ch/chapter|C]]\n- [[lecture|L]]\n",
+        "ch/chapter.md": "# C\n\n![[sec]]\n\n# Inline\n\nText.\n",
+        "ch/chapter.quiz.md": page_quiz,
+        "ch/sec.md": "# S\n",
+        "ch/sec.quiz.md": "# Learned\n\n1. On another page [[other]]\n   - [x] a\n   - [ ] b\n",
+        "lecture.md": "# Lecture\n\n## Part\n\nText.\n",
+        "lecture.quiz.md": "# Prior\n\n1. Fine [[lecture#Part]]\n   - [x] a\n   - [ ] b\n",
+    })
+    # The page quiz is checked and is no orphan; a section's untagged questions are fine
+    assert sorted(messages(vault)) == [
+        "chapter.quiz.md:6:W:has no tag, so a miss rewrites no section and only goes to the notes",
+        "chapter.quiz.md:9:E:the tag [[chapter#Nowhere]] names no section of chapter.md",
+        "sec.quiz.md:3:E:the tag [[other]] names no section of chapter.md",
+    ]
+
+
 def test_duplicate_block_ids(tmp_path):
     vault = write(tmp_path, {
         "outline.md": "- [[ch/chapter|C]]\n",

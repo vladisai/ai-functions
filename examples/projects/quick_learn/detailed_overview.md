@@ -33,8 +33,9 @@ to call. The other two kinds are single calls with a fixed request and a fixed s
 When a reader submits a quiz, the app has to decide what to rewrite and then write it. The
 decision follows a few simple rules. A prior quiz with gaps means that the section should be
 rewritten around what the reader missed. A perfect prior quiz means that the section can be
-condensed. `Adapter.plan_for_quiz` makes this decision in a few lines of Python. Only the writing
-goes to the model, as one streamed call per section.
+condensed. A missed question of a page's background check means that the sections it is tagged
+with should be rewritten. `Adapter.plan_for_quiz` makes this decision in a few lines of Python.
+Only the writing goes to the model, as one streamed call per section.
 
 An agent could make the same decision. However, it would cost a model turn before anything
 happens, might decide differently each time, and could not be tested without a model. With the
@@ -188,6 +189,28 @@ The files change in this order:
 | `v_3/sources.json` | `ChapterState.record_source` | when the rewrite ends |
 | `v_3/random-variables.quiz.md` | `Adapter._write_quiz` | after the rewrite, 20 to 30 s in |
 | `chat_session/` | `ChatAgent._save_session` | after the next chat answer |
+
+**A quiz on several sections.** The quizzes of the lectures go through the same steps with other
+plans. In this example, the reader takes the background check of Lecture 2 and misses two
+questions. One is tagged `[[lecture_2#Stochastic dynamical systems]]` and the other
+`[[lecture_2#Inside the state: the KV cache]]`. `ChapterState.is_page_quiz` tells `plan_for_quiz`
+that `lecture_2.prior` is the page's own quiz, so the plan comes from
+`Adapter._plan_for_background`. That method reads the sections of each question with
+`ChapterState.question_sections` and returns one `Task` for each section tagged on a missed
+question, here two. The reason of each task lists only the questions about its section. No task
+asks for a quiz, so the background check is not replaced. The thread pool runs the two rewrites in
+parallel, each under the lock of its own section. A missed question without tags starts no task
+and only goes to notes.md.
+
+A learned quiz on a group of sections goes through `Adapter._plan_for_learned_gaps`. For example,
+`lectures/lecture_2.information.quiz.md` comes after the section Information and covers the four
+sections from "LLMs are also agents" to Information. The plan rewrites each section tagged on a
+missed question, as above. It then adds one more `Task` with `quiz="learned"`, `rewrite=False` and
+`covers`, the list of every section the old quiz tagged. `Adapter.start` passes that task the
+futures of the rewrites, and `Adapter._run` waits for them before the quiz is written.
+`Adapter._write_quiz` sends the text and the tag of every covered section, and the model ends each
+question with the tags of its sections. The method drops any tag that names no section of the
+page. The fresh quiz goes into `v_3/information.quiz.md`, the same slot as the old one.
 
 The other actions follow the same pattern. `book.py` has one method for each of them.
 `submit_text_input` waits for the note step and rewrites every section of the page if the note
@@ -377,7 +400,10 @@ the reader folder.
 
 Every section, embedded or inline, gets a prior quiz slot before it and a learned one after it,
 with ids like `random-variables.prior`. A slot without questions shows nothing. A section with no
-quiz file therefore looks like plain text. If a page has only one heading, as the preface does,
+quiz file therefore looks like plain text. The page also has two quiz slots of its own, filled from
+the page's own quiz file. On Lecture 2, the slot `lecture_2.prior` sits right after the title and
+the text under it, and `lecture_2.learned` sits at the end of the page. In a chapter folder their
+ids are `chapter.prior` and `chapter.learned`. If a page has only one heading, as the preface does,
 that heading is not taken as a fixed title. The whole page is then one section.
 
 The slug of a section is its title in lower case, with every run of characters other than letters
@@ -400,7 +426,7 @@ section.
 
 A section's quizzes are in one file with a `# Prior` and a `# Learned` part. In a chapter folder
 the file is `<name>.quiz.md`, like `book/probability/random-variables.quiz.md`. Next to a one-file
-page it is `<page>.<name>.quiz.md`, like `lectures/lecture_1.learning.quiz.md`. A quiz file looks
+page it is `<page>.<name>.quiz.md`, like `lectures/lecture_2.information.quiz.md`. A quiz file looks
 like this:
 
 ```
@@ -420,10 +446,57 @@ A numbered item is a question. Options marked `[ ]` and `[x]` make a pick-one qu
 one `[x]`. Options marked `[T]` and `[F]` make a set of true-or-false statements. A question without
 options takes a free-form answer, which is not graded.
 
-An empty Learned part is normal, since the book writes a learned quiz itself when the prior quiz
-shows gaps. The model writes new quizzes in the same format, which `prompts/learned_quiz.md` shows
-it. A rewritten quiz goes into the version folder as `<name>.quiz.md` for both kinds of pages.
-`ChapterState.quiz_questions` reads each part from there first and from the vault otherwise.
+The page's own quiz file is `<page>.quiz.md` next to a one-file page, like
+`lectures/lecture_2.quiz.md`, and `chapter.quiz.md` in a chapter folder. Its Prior part is the
+page's background check, which the reader sees as "Checking your background" right after the
+title. Its Learned part, if it has one, is shown at the end of the page. Each question ends with
+tags, the wikilinks of the sections it is about. A shortened `lectures/lecture_2.quiz.md` looks
+like this:
+
+```
+# Prior
+
+1. A car goes straight with probability 0.8 at each step, independently. What is the probability that it goes straight two steps in a row? [[lecture_2#Stochastic dynamical systems]]
+   - [ ] 0.8
+   - [x] 0.64
+   - [ ] 1.6
+2. Evaluate these statements about conditional distributions: [[lecture_2#Stochastic dynamical systems]] [[lecture_2#LLMs as stochastic dynamical systems]]
+   - [T] For each fixed $x$, the probabilities $p(y \mid x)$ over all $y$ sum to 1
+   - [F] $p(y \mid x)$ and $p(x \mid y)$ are always the same distribution
+```
+
+A tag on a one-file page names the page and a heading, as in
+`[[lecture_2#Stochastic dynamical systems]]`. The heading is matched to its section by the slug. A
+tag in a chapter folder names an embedded section, as in `[[random-variables]]`. `parse_quiz`
+strips the tags from the text the reader sees and keeps them in `ParsedQuestion.links`.
+`ChapterDoc.link_section` turns a tag into a section name. Obsidian shows the tags as links, so an
+author can follow them to their sections. An untagged question of a section's quiz is about that
+section. A missed untagged question of the page's own quiz rewrites nothing and only goes to
+notes.md.
+
+A learned quiz on a group of sections is the Learned part of the quiz file of the group's last
+section. Its questions are tagged like those of the background check. For example,
+`lectures/lecture_2.information.quiz.md` has only a Learned part. It comes after the section
+Information and covers the four sections since the previous quiz. The shipped content has these
+quizzes:
+
+| Page | Quiz files |
+|---|---|
+| Lecture 1 | 4: a background check of 6 questions and 3 learned quizzes |
+| Lecture 2 | 4: a background check of 6 questions and 3 learned quizzes |
+| Lecture 3 | 5: a background check of 6 questions and 4 learned quizzes |
+| Probability and Statistics Primer | 3: a prior quiz for each section, with no tags and an empty Learned part |
+
+An empty Learned part is normal in a section's quiz file, since the book writes a learned quiz
+itself when the section's prior quiz shows gaps. The model writes new quizzes in the same format,
+tags included, which `prompts/learned_quiz.md` shows it. A rewritten quiz goes into the version
+folder as `<name>.quiz.md` for both kinds of pages. The page's own quiz goes there as
+`lecture_2.quiz.md` or `chapter.quiz.md`. `ChapterState.quiz_questions` reads each part from the
+version folder first and from the vault otherwise.
+
+The tutor's `add_quiz` writes a quiz for one section, or for the whole page when it gets the page's
+name. For example, `add_quiz("lecture_2", ..., part="prior")` writes a new background check for
+Lecture 2, on all its sections.
 
 ### Text inputs
 
@@ -462,9 +535,10 @@ strict because rewrites are model output.
 ### Checking the content
 
 `uv run python -m quicklearn.check` reports broken embeds and links, malformed quiz questions, quiz
-files without a section, duplicate block ids and math that does not render. It also warns about
-embedded sections that have no quiz, since the book cannot adapt them. Authors should run it after
-every change to the content.
+files without a section, quiz tags that name no section of the page, duplicate block ids and math
+that does not render. It also warns about embedded sections that have no quiz, since the book
+cannot adapt them. Another warning marks an untagged question of a page's own quiz, since a miss
+on it rewrites nothing. Authors should run it after every change to the content.
 
 ## 6. Recipes
 
@@ -513,17 +587,21 @@ explains.
 
 ### Adding or changing a rule in the adapter
 
-The rules are in `Adapter.plan_for_quiz` in `agents/adapter.py`. A rule returns a `Plan` with the
-sentence that the feedback ends with and the tasks to run. A `Task` rewrites a section. With
-`quiz="prior"` or `quiz="learned"`, it also writes that quiz. With `rewrite=False`, it writes only
-the quiz.
+The rules are in `Adapter.plan_for_quiz` in `agents/adapter.py`. The page's background check goes
+on to `_plan_for_background`, and a learned quiz with gaps to `_plan_for_learned_gaps`. Both
+follow the tags of the missed questions. A rule returns a `Plan` with the sentence that the
+feedback ends with and the tasks to run. A `Task` rewrites a section. With `quiz="prior"` or
+`quiz="learned"`, it also writes that quiz. With `rewrite=False`, it writes only the quiz. With
+`covers`, the quiz is on those sections and waits for their rewrites in the same batch.
 
-In the example below, a reader who gets every question of a learned quiz right gets a prior quiz
-for the next section, when that section has none:
+In the example below, a reader who gets every question of a section's learned quiz right gets a
+prior quiz for the next section, when that section has none:
 
 ```python
         if part == "learned":
             if not has_gaps(quiz):
+                if page:
+                    return Plan("That completes the chapter.")
                 later = names[names.index(name) + 1:]
                 if later and not chapter.quizzes[f"{later[0]}.prior"].questions:
                     reason = f"The reader got every question of the quiz after {name} right:\n\n{answers}"
@@ -531,15 +609,17 @@ for the next section, when that section has none:
                         "You are ready for the next section, and a short quiz before it is on its way.",
                         [Task(later[0], reason, quiz="prior", rewrite=False)],
                     )
-                last = not any(chapter.quizzes[f"{n}.{p}"].questions for n in later for p in QUIZ_PARTS)
-                return Plan("That completes the chapter." if last else "You are ready for the next section.")
+                if any(chapter.quizzes[f"{n}.{p}"].questions for n in later for p in QUIZ_PARTS):
+                    return Plan("You are ready for the next section.")
+                ...
 ```
 
 A test for the rule belongs next to the others in `tests/test_adapter.py`, which build a quiz with
 `answered(...)` and check `plan.tasks`. The small vault's `beta.quiz.md` already has a prior
 question. The test should therefore first overwrite that file with an empty quiz,
-`"# Prior\n\n# Learned\n"`, and build the `ChapterState` after that. The rule tables in the
-docstring of `adapter.py` and in `docs/project_overview.md` should be updated too.
+`"# Prior\n\n# Learned\n"`, and build the `ChapterState` after that. The tests of the page's own
+quiz and of tags are in `tests/test_page_quiz.py`. The rule tables in the docstring of
+`adapter.py` and in `docs/project_overview.md` should be updated too.
 
 The other plans work the same way. `plan_for_all`, `plan_for_stale` and `plan_for_empty` are the
 plans for a text input, for "Personalize again" and for a first visit. `ChapterState.is_compact` is
@@ -566,8 +646,8 @@ the reply hit `max_tokens`.
 
 Two prompts have a format that the code parses. The note step's reply must keep the tags
 `<about_reader>`, `<notes>`, `<rewrite>` and `<reason>`, which `memory.parse_reply` reads. The quiz
-format in `learned_quiz.md` must stay what `parse_quiz` reads. A change to either format needs the
-same change in the parser and its tests.
+format in `learned_quiz.md`, with the tags at the end of a question, must stay what `parse_quiz`
+reads. A change to either format needs the same change in the parser and its tests.
 
 For a change to one chapter only, the chapter's agent.md is the better place. The tests' `FakeLLM`
 recognizes each call by the exact text of its prompt, loaded when the fixture is made. Edits to the
@@ -607,20 +687,23 @@ A new page needs no code. A fourth lecture, for example, takes five steps:
 1. The page is a new file `content/lectures/lecture_4.md` with a `# Lecture 4` title and `## `
    headings with text under them. Each heading becomes a section.
 2. A line `- [[lectures/lecture_4|Lecture 4]]` in `content/outline.md` links the page.
-3. Each section that should adapt gets a quiz file `content/lectures/lecture_4.<slug>.quiz.md`
-   with a `# Prior` part and an empty `# Learned` part. For a section "Reward and loss", the slug
-   is `reward-and-loss`.
+3. The background check goes into `content/lectures/lecture_4.quiz.md`, as a `# Prior` part whose
+   questions end with tags like `[[lecture_4#Reward and loss]]`. A group of sections gets its
+   learned quiz in the quiz file of its last section, `content/lectures/lecture_4.<slug>.quiz.md`,
+   with only a `# Learned` part and tagged questions. For a section "Reward and loss", the slug is
+   `reward-and-loss`.
 4. Figures go into `content/lectures/lecture_4/` and are linked as `![alt](lecture_4/fig.svg)`.
-5. `uv run python -m quicklearn.check` checks the result. The page is then at
-   `/lectures/lecture_4`. Its section names, listed by `/debug/material?chapter=lectures/lecture_4`,
-   should match the names of the quiz files.
+5. `uv run python -m quicklearn.check` checks the result, including that every tag names a
+   section. The page is then at `/lectures/lecture_4`. Its section names, listed by
+   `/debug/material?chapter=lectures/lecture_4`, should match the names of the quiz files.
 
 A chapter folder takes a few more files. `content/book/<chapter>/chapter.md` has one
 `![[<section>]]` line per section. Each section is a `<section>.md` file with a `topics` list in its
-front matter and a `# ` heading, next to its `<section>.quiz.md`. The folder also holds an
-`agent.md` with the chapter's guide and, optionally, a `reference.md`. The outline links the page
-as `book/<chapter>/chapter`. A section file with topics but no text is written for the reader on
-their first visit, from its topics.
+front matter and a `# ` heading, next to its `<section>.quiz.md`. A `chapter.quiz.md` with tags
+like `[[<section>]]` gives the chapter a background check, as the lectures have. The folder also
+holds an `agent.md` with the chapter's guide and, optionally, a `reference.md`. The outline links
+the page as `book/<chapter>/chapter`. A section file with topics but no text is written for the
+reader on their first visit, from its topics.
 
 ### Adding a reader action or a kind of block
 
@@ -798,5 +881,6 @@ selectors for driving the page from Chrome through Playwright.
 - **A second agent.** A reviewer thread on the same coordinator could read each fresh rewrite and
   check it against the post-conditions in the chapter's agent.md. With coordinator tools enabled,
   the two threads could talk through `send_message`.
-- **Your own content.** `QUICKLEARN_CONTENT` can point at a vault of your own course notes. With
-  prior quizzes for its sections, the book adapts them like the shipped content.
+- **Your own content.** `QUICKLEARN_CONTENT` can point at a vault of your own course notes. With a
+  background check for each page, or prior quizzes for its sections, the book adapts them like the
+  shipped content.

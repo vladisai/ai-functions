@@ -1,8 +1,8 @@
 # QuickLearn
 
 QuickLearn is a book that rewrites itself for its reader. It runs on your laptop as a small web
-app. Before each section it asks a short quiz about what the reader already knows. After the
-section, another quiz asks what they learned. Every answer changes what the book knows about them.
+app. A lecture starts with a short quiz on the background the reader needs for it. After every few
+sections, another quiz asks what they learned. Every answer changes what the book knows about them.
 The sections are then rewritten around what they know and what they missed. A chat tutor answers
 questions about the page, remembers what it learns about the reader, and can rewrite a section or
 add a quiz when they ask for it. The book is built with AI Functions, the library in this
@@ -46,7 +46,7 @@ seen much less use.
 1. Clone the branch with the example and go to its folder:
 
    ```bash
-   git clone -b examples/quick-learn https://github.com/strands-labs/ai-functions.git
+   git clone -b examples/quick-learn https://github.com/vladisai/ai-functions.git
    cd ai-functions/examples/projects/quick_learn
    ```
 
@@ -126,11 +126,17 @@ model that has no effort setting.
 ## Using the book
 
 The menu button at the top left opens the drawer with the Preface, the lectures and the outline
-of the book. Each page is a list of sections. Most of them have a short quiz before them that asks
-what the reader already knows. When they get some of it wrong, the section is rewritten in front
-of them around what they missed. A quiz on what they learned then appears after it. When they get
-it all right, the section is condensed. A wrong answer on the second quiz rewrites the section
-again with a fresh quiz.
+of the book. Each page is a list of sections. A lecture starts with a background check right after
+its title, a short quiz on what the reader needs to know for it. Each of its questions is about one
+or more sections of the lecture. A wrong answer rewrites those sections in front of the reader,
+around what they missed. When all the answers are right, the lecture stays as it is. After every
+few sections, a quiz asks what the reader learned in them. A wrong answer there rewrites the
+sections that the question was about, and a fresh quiz on the same sections takes its place.
+
+The probability primer has a short quiz before each section instead. When the reader gets some of
+it wrong, the section is rewritten around what they missed, and a quiz on what they learned
+appears after it. When they get it all right, the section is condensed. A wrong answer on the
+second quiz rewrites the section again with a fresh quiz.
 
 Some pages ask the reader about themselves in a text box, for example about their background in
 the probability primer. The answer goes into what the book knows about them and shapes the

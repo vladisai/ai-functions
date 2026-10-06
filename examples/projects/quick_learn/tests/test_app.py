@@ -107,10 +107,11 @@ def test_debug_material(app):
     assert app.debug_material("ch") == material
     assert (material["chapter"], material["version"], material["stale"], material["running"]) == ("ch", "v_0", [], 0)
     assert [s["id"] for s in material["sections"]] == [
-        "fixed-1", "welcome.prior", "welcome", "welcome.learned", "about-you", "alpha.prior", "alpha", "alpha.learned",
-        "beta.prior", "beta", "beta.learned", "symbols.prior", "symbols", "symbols.learned",
+        "fixed-1", "chapter.prior", "welcome.prior", "welcome", "welcome.learned", "about-you", "alpha.prior", "alpha",
+        "alpha.learned", "beta.prior", "beta", "beta.learned", "symbols.prior", "symbols", "symbols.learned",
+        "chapter.learned",
     ]
-    assert material["sections"][6] == {
+    assert material["sections"][7] == {
         "id": "alpha", "title": "Alpha", "level": 1, "content_len": 600, "start": "alpha " * 13 + "al",
     }
     assert material["quizzes"]["alpha.prior"] == {"n": 1, "state": "active", "answers": 0}
@@ -122,7 +123,7 @@ def test_debug_material_over_http(app):
     app.get_book()
     response = TestClient(app.app).get("/debug/material", params={"chapter": "ch"})
     assert response.status_code == 200
-    assert response.json()["chapter"] == "ch" and len(response.json()["sections"]) == 14
+    assert response.json()["chapter"] == "ch" and len(response.json()["sections"]) == 16
 
 
 def test_reset_empties_the_reader_folder(app):

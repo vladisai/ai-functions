@@ -10,10 +10,12 @@ list of Sections, one per block (see vault/chapter.py):
 | embedded section | its file name, e.g. random-variables | the rewritten body, or the vault file's |
 | inline section | a slug of its heading, e.g. symbols-at-a-glance | the rewritten body, or the page's text |
 | prior / learned quiz | random-variables.prior | `<!-- quiz:random-variables.prior -->` |
+| the page's own quiz | lecture_1.prior, chapter.learned | `<!-- quiz:lecture_1.prior -->` |
 | text input | a slug of its title | `<!-- text_input:tell-us-about-yourself -->` |
 
-Every section has both quiz slots. A quiz comes from `<name>.quiz.md` in the current version, else
-from the vault's quiz file, and a slot without questions shows nothing until they exist.
+Every section has both quiz slots, and so has the page, under its stem. A quiz comes from
+`<name>.quiz.md` in the current version, else from the vault's quiz file, and a slot without
+questions shows nothing until they exist.
 """
 
 from __future__ import annotations
@@ -37,12 +39,13 @@ from quicklearn.core.text_input import TextInput, TextInputState
 from quicklearn.reader.store import ReaderStore
 from quicklearn.vault.chapter import QUIZ_SUFFIX, Block, ChapterDoc, parse_page, read_section
 from quicklearn.vault.links import render_links
-from quicklearn.vault.quiz_md import parse_quiz
+from quicklearn.vault.quiz_md import ParsedQuestion, parse_quiz
 
 log = logging.getLogger(__name__)
 
 SOURCES_FILE = "sources.json"
 QUIZ_TITLES = {"prior": "Checking prior knowledge", "learned": "Checking what you learned"}
+PAGE_QUIZ_TITLES = {"prior": "Checking your background", "learned": "Checking what you learned on this page"}
 _NOTE = re.compile(r"<!--\s*note:.*?-->\n?")
 
 
@@ -128,15 +131,35 @@ class ChapterState:
         """The vault's quiz file of the section, and the reader's in this version."""
         return [self.doc.quiz_path(name), (version_dir or self.version_dir) / f"{name}{QUIZ_SUFFIX}"]
 
-    def quiz_questions(self, name: str, part: str, version_dir: Path | None = None) -> list[QuizQuestion]:
-        """A part of the section's quiz: the rewritten one in this version, or the vault's."""
+    def quiz_parsed(self, name: str, part: str, version_dir: Path | None = None) -> list[ParsedQuestion]:
+        """A part of the section's quiz with its tags: the rewritten one in this version, or the vault's."""
         vault_file, override_file = self.quiz_paths(name, version_dir)
         for path in (override_file, vault_file):
             if path.exists():
-                questions = parse_quiz(path.read_text()).questions(part)
-                if questions is not None:
-                    return questions
+                parsed = getattr(parse_quiz(path.read_text()), part)
+                if parsed is not None:
+                    return parsed
         return []
+
+    def quiz_questions(self, name: str, part: str, version_dir: Path | None = None) -> list[QuizQuestion]:
+        return [p.question for p in self.quiz_parsed(name, part, version_dir)]
+
+    def is_page_quiz(self, quiz: Quiz) -> bool:
+        return self.doc.is_page(quiz.id.rpartition(".")[0])
+
+    def question_sections(self, quiz: Quiz) -> list[list[str]]:
+        """The sections each question of the quiz is tagged with, [] for an untagged one."""
+        name, _, part = quiz.id.rpartition(".")
+        parsed = self.quiz_parsed(name, part)
+        if [p.question for p in parsed] != quiz.questions:
+            # The file changed since the page last polled it, so its tags may be for other questions
+            log.warning("%s: quiz %s changed on disk, so its tags are not used", self.key, quiz.id)
+            return [[] for _ in quiz.questions]
+        sections = []
+        for p in parsed:
+            names = [self.doc.link_section(link) for link in p.links]
+            sections.append(list(dict.fromkeys(n for n in names if n)))
+        return sections
 
     def _links(self, text: str) -> str:
         """Wikilinks in the text: a section of this chapter links to its place on the page."""
@@ -162,7 +185,8 @@ class ChapterState:
         if block.kind == "section":
             return Section(block.id, block.title, self.section_text(block.section, version_dir), block.level)
         if block.kind in ("prior", "learned"):
-            return Section(block.id, QUIZ_TITLES[block.kind], f"<!-- quiz:{block.id} -->", block.level)
+            titles = PAGE_QUIZ_TITLES if self.doc.is_page(block.section) else QUIZ_TITLES
+            return Section(block.id, titles[block.kind], f"<!-- quiz:{block.id} -->", block.level)
         return Section(block.id, block.title, f"<!-- text_input:{block.id} -->", block.level)
 
     def sync_version_stack(self) -> None:

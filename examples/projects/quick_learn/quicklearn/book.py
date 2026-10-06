@@ -146,7 +146,10 @@ class Book:
         self.adapter.start(chapter, plan.tasks)
         chapter.save_answers()
         name, _, part = quiz.id.rpartition(".")
-        title = f"{chapter.doc.sections[name].title}, {'prior knowledge' if part == 'prior' else 'after reading'}"
+        if chapter.is_page_quiz(quiz):
+            title = f"{chapter.title}, {'background check' if part == 'prior' else 'after reading'}"
+        else:
+            title = f"{chapter.doc.sections[name].title}, {'prior knowledge' if part == 'prior' else 'after reading'}"
         self.store.record_quiz(chapter.key, title, quiz_summary(quiz))
         self._note_later(chapter, f"The reader submitted the quiz {title}:\n\n{format_answers(quiz)}")
         log.info("%s: quiz %s submitted, rewriting %s", chapter.key, quiz.id, [t.section for t in plan.tasks])

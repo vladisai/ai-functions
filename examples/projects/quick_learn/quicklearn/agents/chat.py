@@ -144,11 +144,15 @@ class ChatAgent:
         sections = "\n".join(
             f"- {name}: {chapter.doc.sections[name].title}" for name in chapter.section_names
         )
+        stem = chapter.doc.stem
+        page_quiz = ""
+        if chapter.doc.is_page(stem):
+            page_quiz = f"The page's own quiz, on all its sections, is `{stem}` for add_quiz.\n\n"
         return (
             f"{load_prompt('agent').strip()}\n\n"
             f"# The chapter: {chapter.title}\n\nIts file is `{chapter.doc.page.relative_to(chapter.vault)}`.\n\n"
             f"{chapter.doc.agent_notes.strip()}\n\n"
-            f"## Sections\n\n{sections}\n\n"
+            f"## Sections\n\n{sections}\n\n{page_quiz}"
             f"{reader_context(self.store, chapter)}"
         )
 
@@ -247,25 +251,32 @@ class ChatAgent:
 
         @tool
         def add_quiz(name: str, request: str, part: str = "learned") -> str:
-            """Write a quiz for one section of this chapter in the background, without changing its
-            text. It replaces the section's quiz of that part. Returns at once, and the quiz appears
-            on the page when it is written.
+            """Write a quiz for one section of this chapter, or for the whole page, in the background,
+            without changing the text. It replaces that quiz part. Returns at once, and the quiz
+            appears on the page when it is written.
 
             Args:
-                name: Section name, e.g. expectation
+                name: Section name, e.g. expectation, or the page's name, e.g. lecture_2, for the
+                    page's own quiz on all its sections: its prior is the background check after the
+                    title, its learned quiz comes at the end of the page.
                 request: What the quiz should check and why, in enough detail for a writer who sees
                     only this request, the section and the notes about the reader.
                 part: "prior" for a quiz before the section, on what the reader knows already, or
                     "learned" for one after it, on what they understood.
             """
-            if name not in chapter().doc.sections:
+            page = chapter().doc.is_page(name)
+            if name not in chapter().doc.sections and not page:
                 return unknown(name)
             if part not in QUIZ_PARTS:
                 return f"Error: part is one of {', '.join(QUIZ_PARTS)}, not {part!r}."
-            task = Task(name, f"The reader asked in chat: {request}", quiz=part, rewrite=False)
+            covers = chapter().section_names if page else []
+            task = Task(name, f"The reader asked in chat: {request}", quiz=part, rewrite=False, covers=covers)
             self.adapter.start(chapter(), [task])
-            where = "before" if part == "prior" else "after"
-            return f"Writing a {part} quiz for {name} now. It appears {where} the section when it is ready."
+            if page:
+                where = "after the title" if part == "prior" else "at the end of the page"
+            else:
+                where = "before the section" if part == "prior" else "after the section"
+            return f"Writing a {part} quiz for {name} now. It appears {where} when it is ready."
 
         @tool
         def remember(note: str, scope: str) -> str:

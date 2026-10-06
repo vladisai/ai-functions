@@ -111,7 +111,7 @@ def test_a_version_made_elsewhere_joins_the_version_bar(chapter: ChapterState, s
     assert chapter.material.total_versions == 1
     assert chapter.live.poll_all() == {"alpha"}
     assert chapter.material.total_versions == 2
-    assert chapter.material.version_stack[0].sections[6].content == words("alpha", 100)
+    assert chapter.material.version_stack[0].sections[7].content == words("alpha", 100)
 
 
 def test_fingerprint():

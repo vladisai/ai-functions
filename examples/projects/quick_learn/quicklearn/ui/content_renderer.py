@@ -2,7 +2,8 @@
 
 A section's content is its markdown, or one tag that stands for a widget:
 `<!-- quiz:random-variables.prior -->` or `<!-- text_input:tell-us-about-yourself -->`. Every
-section has both quiz slots, and a slot without questions renders nothing until they exist.
+section has both quiz slots, and so has the page, e.g. `lecture_2.prior` after the title. A slot
+without questions renders nothing until they exist.
 """
 
 from __future__ import annotations
