@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" viewBox="0 0 900 400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="s" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="t" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#854F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<line x1="90" y1="330" x2="720" y2="330" stroke="#b4b2a9" stroke-width="1"/>
+<text x="80" y="334.2" font-size="12" fill="#5f5e5a" text-anchor="end">0</text>
+<line x1="90" y1="280" x2="720" y2="280" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="284.2" font-size="12" fill="#5f5e5a" text-anchor="end">0.5M</text>
+<line x1="90" y1="230" x2="720" y2="230" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="234.2" font-size="12" fill="#5f5e5a" text-anchor="end">1M</text>
+<line x1="90" y1="180" x2="720" y2="180" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="184.2" font-size="12" fill="#5f5e5a" text-anchor="end">1.5M</text>
+<line x1="90" y1="130" x2="720" y2="130" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="134.2" font-size="12" fill="#5f5e5a" text-anchor="end">2M</text>
+<line x1="90" y1="80" x2="720" y2="80" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="84.2" font-size="12" fill="#5f5e5a" text-anchor="end">2.5M</text>
+<line x1="90" y1="30" x2="720" y2="30" stroke="#b4b2a9" stroke-width="0.5"/>
+<text x="80" y="34.2" font-size="12" fill="#5f5e5a" text-anchor="end">3M</text>
+<text x="90" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">0</text>
+<text x="216" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">10</text>
+<text x="342" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">20</text>
+<text x="468" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">30</text>
+<text x="594" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">40</text>
+<text x="720" y="352.2" font-size="12" fill="#5f5e5a" text-anchor="middle">50</text>
+<text x="405" y="378.6" font-size="13" fill="#5f5e5a" text-anchor="middle">agent turn</text>
+<text x="80" y="16.6" font-size="13" fill="#5f5e5a" text-anchor="start">tokens processed (cumulative)</text>
+<polyline points="90.0,330.0 102.6,329.3 115.2,328.4 127.8,327.3 140.4,326.0 153.0,324.5 165.6,322.8 178.2,320.9 190.8,318.8 203.4,316.5 216.0,314.0 228.6,311.3 241.2,308.4 253.8,305.3 266.4,302.0 279.0,298.5 291.6,294.8 304.2,290.9 316.8,286.8 329.4,282.5 342.0,278.0 354.6,273.3 367.2,268.4 379.8,263.3 392.4,258.0 405.0,252.5 417.6,246.8 430.2,240.9 442.8,234.8 455.4,228.5 468.0,222.0 480.6,215.3 493.2,208.4 505.8,201.3 518.4,194.0 531.0,186.5 543.6,178.8 556.2,170.9 568.8,162.8 581.4,154.5 594.0,146.0 606.6,137.3 619.2,128.4 631.8,119.3 644.4,110.0 657.0,100.5 669.6,90.8 682.2,80.9 694.8,70.8 707.4,60.5 720.0,50.0" fill="none" stroke="#BA7517" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="720.0" cy="50.0" r="4" fill="#BA7517" stroke="#fff" stroke-width="2"/>
+<text x="734" y="46.5" font-size="13" fill="#1f1e1d" text-anchor="start">no cache</text>
+<text x="734" y="63.9" font-size="11" fill="#5f5e5a" text-anchor="start">re-read the whole state each turn</text>
+<text x="734" y="79.8" font-size="11" fill="#5f5e5a" text-anchor="start">2.80M tokens</text>
+<polyline points="90.0,330.0 102.6,329.3 115.2,329.1 127.8,328.9 140.4,328.7 153.0,328.5 165.6,328.3 178.2,328.1 190.8,327.9 203.4,327.7 216.0,327.5 228.6,327.3 241.2,327.1 253.8,326.9 266.4,326.7 279.0,326.5 291.6,326.3 304.2,326.1 316.8,325.9 329.4,325.7 342.0,325.5 354.6,325.3 367.2,325.1 379.8,324.9 392.4,324.7 405.0,324.5 417.6,324.3 430.2,324.1 442.8,323.9 455.4,323.7 468.0,323.5 480.6,323.3 493.2,323.1 505.8,322.9 518.4,322.7 531.0,322.5 543.6,322.3 556.2,322.1 568.8,321.9 581.4,321.7 594.0,321.5 606.6,321.3 619.2,321.1 631.8,320.9 644.4,320.7 657.0,320.5 669.6,320.3 682.2,320.1 694.8,319.9 707.4,319.7 720.0,319.5" fill="none" stroke="#534AB7" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="720.0" cy="319.5" r="4" fill="#534AB7" stroke="#fff" stroke-width="2"/>
+<text x="734" y="316.1" font-size="13" fill="#1f1e1d" text-anchor="start">KV / prompt cache</text>
+<text x="734" y="333.4" font-size="11" fill="#5f5e5a" text-anchor="start">process only new tokens</text>
+<text x="734" y="349.4" font-size="11" fill="#5f5e5a" text-anchor="start">0.10M tokens</text>
+<text x="100" y="47.9" font-size="11" fill="#5f5e5a" text-anchor="start">illustrative: 5k-token prompt, +2k tokens per turn</text>
+</svg>

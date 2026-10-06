@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="380" viewBox="0 0 900 380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><pattern id="grid" width="32.5" height="32.5" patternUnits="userSpaceOnUse"><path d="M32.5 0H0V32.5" fill="none" stroke="#F1EFE8" stroke-width="1"/></pattern></defs>
+<rect x="74" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="111" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">1</tspan></text>
+<rect x="170" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="207" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">2</tspan></text>
+<rect x="266" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="303" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">3</tspan></text>
+<rect x="362" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="399" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">4</tspan></text>
+<rect x="458" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="495" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">5</tspan></text>
+<rect x="554" y="150" width="80" height="80" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="2.5"/>
+<text x="591" y="197.7" font-size="22" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">6</tspan></text>
+<rect x="650" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="687" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">7</tspan></text>
+<rect x="746" y="150" width="80" height="80" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="783" y="197.7" font-size="22" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="15" dy="6">8</tspan></text>
+<path d="M74 42 V30 H442 V42" fill="none" stroke="#888780" stroke-width="1.5"/>
+<text x="258" y="24.3" font-size="18" fill="#888780" text-anchor="middle" font-family="Menlo, monospace">0</text>
+<path d="M458 42 V30 H826 V42" fill="none" stroke="#1F5B8A" stroke-width="1.5"/>
+<text x="642" y="24.3" font-size="18" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">1</text>
+<line x1="450" y1="34" x2="450" y2="240" stroke="#1F5B8A" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M458 82 V70 H634 V82" fill="none" stroke="#1F5B8A" stroke-width="1.5"/>
+<text x="546" y="64.3" font-size="18" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">0</text>
+<path d="M650 82 V70 H826 V82" fill="none" stroke="#888780" stroke-width="1.5"/>
+<text x="738" y="64.3" font-size="18" fill="#888780" text-anchor="middle" font-family="Menlo, monospace">1</text>
+<line x1="642" y1="74" x2="642" y2="240" stroke="#1F5B8A" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M458 122 V110 H538 V122" fill="none" stroke="#888780" stroke-width="1.5"/>
+<text x="498" y="104.3" font-size="18" fill="#888780" text-anchor="middle" font-family="Menlo, monospace">0</text>
+<path d="M554 122 V110 H634 V122" fill="none" stroke="#1F5B8A" stroke-width="1.5"/>
+<text x="594" y="104.3" font-size="18" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">1</text>
+<line x1="546" y1="114" x2="546" y2="240" stroke="#1F5B8A" stroke-width="2" stroke-dasharray="6 4"/>
+<path d="M594 238 V268" stroke="#534AB7" stroke-width="1.5"/>
+<text x="564" y="299.8" font-size="28" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">1</text>
+<text x="594" y="299.8" font-size="28" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">0</text>
+<rect x="611" y="271" width="26" height="38" rx="5" fill="none" stroke="#1F5B8A" stroke-width="2"/>
+<text x="624" y="299.8" font-size="28" fill="#1F5B8A" text-anchor="middle" font-family="Menlo, monospace">1</text>
+</svg>

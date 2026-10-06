@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="176" viewBox="0 0 860 176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><pattern id="grid" width="32.5" height="32.5" patternUnits="userSpaceOnUse"><path d="M32.5 0H0V32.5" fill="none" stroke="#F1EFE8" stroke-width="1"/></pattern></defs>
+<text x="489" y="14.9" font-size="14" fill="#5f5e5a" text-anchor="middle">after 3 questions</text>
+<text x="210" y="53.2" font-size="15" fill="#5f5e5a" text-anchor="end">“Is it x₁?”, “Is it x₂?”, …</text>
+<text x="210" y="74.9" font-size="14" fill="#1F5B8A" text-anchor="end" font-style="italic">≈ 0.6 bits per answer</text>
+<rect x="230" y="30" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="256" y="64.0" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">1</tspan></text>
+<rect x="296" y="30" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="322" y="64.0" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">2</tspan></text>
+<rect x="362" y="30" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="388" y="64.0" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">3</tspan></text>
+<rect x="428" y="30" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="454" y="64.0" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">4</tspan></text>
+<rect x="494" y="30" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="520" y="64.0" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">5</tspan></text>
+<rect x="560" y="30" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="586" y="64.0" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">6</tspan></text>
+<rect x="626" y="30" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="652" y="64.0" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">7</tspan></text>
+<rect x="692" y="30" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="718" y="64.0" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">8</tspan></text>
+<text x="772" y="63.6" font-size="16" fill="#1f1e1d" text-anchor="start">5 left</text>
+<text x="210" y="133.2" font-size="15" fill="#5f5e5a" text-anchor="end">“Is it in the left half?”</text>
+<text x="210" y="154.9" font-size="14" fill="#1F5B8A" text-anchor="end" font-style="italic">1 bit per answer</text>
+<rect x="230" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="256" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">1</tspan></text>
+<rect x="296" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="322" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">2</tspan></text>
+<rect x="362" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="388" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">3</tspan></text>
+<rect x="428" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="454" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">4</tspan></text>
+<rect x="494" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="520" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">5</tspan></text>
+<rect x="560" y="110" width="56" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="586" y="143.9" font-size="17" fill="#3C3489" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">6</tspan></text>
+<rect x="626" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="652" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">7</tspan></text>
+<rect x="692" y="110" width="56" height="56" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1"/>
+<text x="718" y="143.9" font-size="17" fill="#888780" text-anchor="middle"><tspan font-style="italic">x</tspan><tspan font-size="11" dy="5">8</tspan></text>
+<text x="772" y="143.6" font-size="16" fill="#1F5B8A" text-anchor="start">1 left</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="300" viewBox="0 0 860 300" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><pattern id="grid" width="32.5" height="32.5" patternUnits="userSpaceOnUse"><path d="M32.5 0H0V32.5" fill="none" stroke="#F1EFE8" stroke-width="1"/></pattern></defs>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<defs><pattern id="g20" x="590" y="10" width="31.25" height="31.25" patternUnits="userSpaceOnUse"><path d="M31.25 0H0V31.25" fill="none" stroke="#F1EFE8" stroke-width="1"/></pattern></defs>
+<rect x="590" y="10" width="250" height="250" fill="url(#g20)"/>
+<rect x="590" y="10" width="250" height="250" rx="4" fill="none" stroke="#b4b2a9" stroke-width="1"/>
+<text x="832" y="254.2" font-size="12" fill="#5f5e5a" text-anchor="end" font-style="italic"></text>
+<text x="600" y="26.2" font-size="12" fill="#5f5e5a" text-anchor="start" font-style="italic"></text>
+<ellipse cx="748.2" cy="106.8" rx="30" ry="22" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<rect x="20" y="23.0" width="260" height="38" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="150" y="47.2" font-size="15" fill="#1f1e1d" text-anchor="middle">She speaks French fluently.</text>
+<circle cx="745.0" cy="95.0" r="5" fill="#534AB7"/>
+<path d="M288 42 L735.067 93.848" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ah)"/>
+<rect x="20" y="85.0" width="260" height="38" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="150" y="109.2" font-size="15" fill="#1f1e1d" text-anchor="middle">She is fluent in French.</text>
+<circle cx="760.0" cy="110.0" r="5" fill="#534AB7"/>
+<path d="M288 104 L750.001 109.873" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ah)"/>
+<rect x="20" y="147.0" width="260" height="38" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="150" y="171.2" font-size="15" fill="#1f1e1d" text-anchor="middle">French? She speaks it fluently.</text>
+<circle cx="740.0" cy="115.0" r="5" fill="#534AB7"/>
+<path d="M288 166 L730.063 116.121" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ah)"/>
+<rect x="20" y="221.0" width="260" height="38" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.5"/>
+<text x="150" y="245.2" font-size="15" fill="#1f1e1d" text-anchor="middle">The stock market fell today.</text>
+<circle cx="660.0" cy="197.5" r="5" fill="#B4B2A9"/>
+<path d="M288 240 L650.065 198.635" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#ah)"/>
+<text x="715" y="291.2" font-size="15" fill="#5f5e5a" text-anchor="middle">Representation Z</text>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "quizzes": {
+    "random-variables.prior": {
+      "state": "completed",
+      "answers": {
+        "0": "b",
+        "1": "a:T,b:F,c:T,d:T",
+        "2": "a",
+        "3": "a:F,b:T,c:T,d:F"
+      },
+      "fingerprint": "d064d1e86ec903fd"
+    }
+  },
+  "text_inputs": {
+    "tell-us-about-yourself": {
+      "state": "done",
+      "answer": "I'm a physics undergrad. I know calculus and some linear algebra, but I never took a probability course."
+    }
+  }
+}

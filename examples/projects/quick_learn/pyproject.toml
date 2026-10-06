@@ -1,0 +1,30 @@
+[project]
+name = "quick-learn-example"
+version = "0.1.0"
+description = "QuickLearn, an adaptive book that rewrites itself for its reader."
+requires-python = ">=3.12"
+# The web app's dependencies stay in this folder, out of the shared examples environment.
+dependencies = [
+    "strands-ai-functions",
+    "nicegui>=2.0",
+    "markdown2>=2.5",
+    "latex2mathml",
+    "pyyaml>=6",
+    "anthropic[bedrock]>=0.70",
+    "boto3>=1.42.83",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "pytest-timeout", "httpx", "ruff"]
+
+# Standalone example with its own environment, run from this folder.
+[tool.uv]
+package = false
+
+# Use the repo's local strands-ai-functions rather than the published wheel.
+[tool.uv.sources]
+strands-ai-functions = { path = "../../..", editable = true }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+timeout = 60

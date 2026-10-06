@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="850" height="172" viewBox="0 0 850 172" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<text x="20.0" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">−log <tspan font-style="italic">p</tspan>(</text>
+<rect x="101.2" y="20.0" width="225.0" height="42" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="213.7" y="47.6" font-size="19" fill="#1f1e1d" text-anchor="middle">The cat sat on the mat.</text>
+<text x="333.2" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">)</text>
+<line x1="213.7" y1="70.0" x2="213.7" y2="110.0" stroke="#888780" stroke-width="2"/>
+<path d="M206.7 108.0L213.7 118.0L220.7 108.0Z" fill="#888780"/>
+<text x="213.7" y="152.5" font-size="30" fill="#1F5B8A" text-anchor="middle">26 bits</text>
+<text x="429.4" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">−log <tspan font-style="italic">p</tspan>(</text>
+<rect x="510.6" y="20.0" width="305.7" height="42" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="663.5" y="47.6" font-size="19" fill="#1f1e1d" text-anchor="middle">Purple silent rocks dream loudly.</text>
+<text x="823.3" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">)</text>
+<line x1="663.5" y1="70.0" x2="663.5" y2="110.0" stroke="#888780" stroke-width="2"/>
+<path d="M656.5 108.0L663.5 118.0L670.5 108.0Z" fill="#888780"/>
+<text x="663.5" y="152.5" font-size="30" fill="#1F5B8A" text-anchor="middle">86 bits</text>
+</svg>

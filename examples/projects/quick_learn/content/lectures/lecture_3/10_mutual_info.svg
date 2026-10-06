@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1596" height="182" viewBox="0 0 1596 182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<text x="20.0" y="99.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">−log <tspan font-style="italic">p</tspan>(</text>
+<rect x="101.2" y="70.0" width="263.2" height="42" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="232.8" y="97.7" font-size="19" fill="#1f1e1d" text-anchor="middle">She speaks French fluently.</text>
+<text x="371.4" y="99.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">)</text>
+<text x="377.6" y="99.4" font-size="24" fill="#1F5B8A" text-anchor="start" xml:space="preserve"> = 35 bits</text>
+<text x="514.2" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">−log <tspan font-style="italic">p</tspan>(</text>
+<rect x="595.3" y="20.0" width="263.2" height="42" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="726.9" y="47.6" font-size="19" fill="#1f1e1d" text-anchor="middle">She speaks French fluently.</text>
+<text x="865.5" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">|</text>
+<rect x="877.8" y="20.0" width="216.9" height="42" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.5"/>
+<text x="986.2" y="47.6" font-size="19" fill="#1f1e1d" text-anchor="middle">Alice grew up in Paris.</text>
+<text x="1101.6" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">)</text>
+<text x="1107.9" y="49.4" font-size="24" fill="#1F5B8A" text-anchor="start" xml:space="preserve"> = 21 bits</text>
+<text x="1291.5" y="49.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve"><tspan font-style="italic">I</tspan>(x₁; x₂) = 35 − 21 = 14 bits</text>
+<text x="514.2" y="149.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">−log <tspan font-style="italic">p</tspan>(</text>
+<rect x="595.3" y="120.0" width="263.2" height="42" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+<text x="726.9" y="147.7" font-size="19" fill="#1f1e1d" text-anchor="middle">She speaks French fluently.</text>
+<text x="865.5" y="149.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">|</text>
+<rect x="877.8" y="120.0" width="264.0" height="42" rx="10" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.5"/>
+<text x="1009.8" y="147.7" font-size="19" fill="#1f1e1d" text-anchor="middle">The stock market fell today.</text>
+<text x="1148.7" y="149.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve">)</text>
+<text x="1155.0" y="149.4" font-size="24" fill="#1F5B8A" text-anchor="start" xml:space="preserve"> = 32 bits</text>
+<text x="1291.5" y="149.4" font-size="24" fill="#1f1e1d" text-anchor="start" xml:space="preserve"><tspan font-style="italic">I</tspan>(x₁; x₂) = 35 − 32 = 3 bits</text>
+</svg>

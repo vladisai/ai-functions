@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 430" width="680" height="430" font-family="Helvetica, Arial, sans-serif">
+<defs><marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker><marker id="ac" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<line x1="209.64791615253526" y1="202.97180600113612" x2="317.3" y2="109.6" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)"/>
+<line x1="209.64791615253526" y1="237.02819399886388" x2="317.3" y2="330.4" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)"/>
+<line x1="366.0" y1="220.0" x2="460.0" y2="220.0" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)"/>
+<line x1="359.64791615253523" y1="202.97180600113612" x2="467.3" y2="109.6" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)"/>
+<line x1="516.0" y1="350.0" x2="566.0" y2="350.0" stroke="#888780" stroke-width="2.6" stroke-linecap="round" marker-end="url(#ag)" opacity="0.35"/>
+<line x1="509.64791615253523" y1="332.9718060011361" x2="547.4" y2="300.2" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)" opacity="0.35"/>
+<line x1="509.64791615253523" y1="367.0281939988639" x2="547.4" y2="399.8" stroke="#888780" stroke-width="1" stroke-linecap="round" marker-end="url(#ag)" opacity="0.35"/>
+<line x1="216.0" y1="220.0" x2="310.0" y2="220.0" stroke="#BA7517" stroke-width="3.5" stroke-linecap="round" marker-end="url(#ap)"/>
+<line x1="359.64791615253523" y1="237.02819399886388" x2="467.3" y2="330.4" stroke="#534AB7" stroke-width="3.5" stroke-linecap="round" marker-end="url(#ac)"/>
+<text x="415.0" y="210" text-anchor="middle" font-size="13" fill="#5F5E5A">0.1</text>
+<text x="379.0" y="175.0" text-anchor="end" font-size="13" fill="#5F5E5A">0.1</text>
+<text x="379.0" y="275.0" text-anchor="end" font-size="13" font-weight="600" fill="#534AB7">0.8</text>
+<text x="310" y="192" text-anchor="end" font-size="15" font-style="italic" fill="#534AB7">u<tspan font-size="11" dy="4" font-style="normal">1</tspan></text>
+<circle cx="340" cy="90" r="26" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.6"/>
+<circle cx="490" cy="90" r="26" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.6"/>
+<circle cx="190" cy="220" r="26" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.2"/>
+<text x="190" y="225" text-anchor="middle" font-size="15" font-style="italic" fill="#633806">x<tspan font-size="11" dy="4" font-style="normal">0</tspan></text>
+<circle cx="340" cy="220" r="26" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.2"/>
+<text x="340" y="225" text-anchor="middle" font-size="15" font-style="italic" fill="#633806">x<tspan font-size="11" dy="4" font-style="normal">1</tspan></text>
+<circle cx="490" cy="220" r="26" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.6"/>
+<circle cx="340" cy="350" r="26" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.6"/>
+<circle cx="490" cy="350" r="26" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.2"/>
+<text x="490" y="355" text-anchor="middle" font-size="15" font-style="italic" fill="#633806">x<tspan font-size="11" dy="4" font-style="normal">2</tspan></text>
+</svg>

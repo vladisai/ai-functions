@@ -1,0 +1,40 @@
+{
+  "quizzes": {
+    "random-variables.prior": {
+      "state": "completed",
+      "answers": {
+        "0": "b",
+        "1": "a:T,b:F,c:T,d:T",
+        "2": "a",
+        "3": "a:T,b:F,c:T,d:T"
+      },
+      "fingerprint": "d064d1e86ec903fd"
+    },
+    "expectation.prior": {
+      "state": "completed",
+      "answers": {
+        "0": "b",
+        "1": "a:T,b:F,c:T",
+        "2": "b",
+        "3": "a:T,b:T,c:T"
+      },
+      "fingerprint": "971a2cca9366df79"
+    },
+    "information-theory.prior": {
+      "state": "completed",
+      "answers": {
+        "0": "a",
+        "1": "a:F,b:T,c:T",
+        "2": "a",
+        "3": "a:T,b:T,c:T,d:F"
+      },
+      "fingerprint": "9e34875782091f73"
+    }
+  },
+  "text_inputs": {
+    "tell-us-about-yourself": {
+      "state": "done",
+      "answer": "I'm a statistics professor. I teach graduate courses in mathematical statistics and measure-theoretic probability. I want a terse reference with the notation used in machine learning papers."
+    }
+  }
+}

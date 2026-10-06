@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.nicegui/
+logs/
+content/personalization_data/

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="175" viewBox="0 0 700 175" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="30" y="63" width="58" height="34" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="59" y="84.5" font-size="13" fill="#085041" text-anchor="middle">Fix</text>
+<text x="59" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">1</tspan></text>
+<rect x="96" y="63" width="58" height="34" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="125" y="84.5" font-size="13" fill="#085041" text-anchor="middle">failing</text>
+<text x="125" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">2</tspan></text>
+<rect x="162" y="63" width="58" height="34" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="191" y="84.5" font-size="13" fill="#085041" text-anchor="middle">test</text>
+<text x="191" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">3</tspan></text>
+<rect x="228" y="63" width="58" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="257" y="84.5" font-size="13" fill="#3C3489" text-anchor="middle">I</text>
+<text x="257" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">4</tspan></text>
+<rect x="294" y="63" width="58" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="323" y="84.5" font-size="13" fill="#3C3489" text-anchor="middle">'ll</text>
+<text x="323" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">t−1</tspan></text>
+<rect x="360" y="63" width="58" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="389" y="84.5" font-size="13" fill="#3C3489" text-anchor="middle">run</text>
+<text x="389" y="119.5" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">t</tspan></text>
+<line x1="422" y1="80" x2="584" y2="34" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#a)"/>
+<text x="525.9" y="42.6" font-size="13" fill="#5f5e5a" text-anchor="middle">0.6</text>
+<rect x="590" y="17" width="70" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="625" y="38.5" font-size="13" fill="#3C3489" text-anchor="middle">the</text>
+<line x1="422" y1="80" x2="584" y2="80" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#a)"/>
+<text x="525.9" y="72.5" font-size="13" fill="#5f5e5a" text-anchor="middle">0.3</text>
+<rect x="590" y="63" width="70" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="625" y="84.5" font-size="13" fill="#3C3489" text-anchor="middle">pytest</text>
+<line x1="422" y1="80" x2="584" y2="126" stroke="#888780" stroke-width="1.5" stroke-linecap="round" marker-end="url(#a)"/>
+<text x="525.9" y="102.5" font-size="13" fill="#5f5e5a" text-anchor="middle">0.1</text>
+<rect x="590" y="109" width="70" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="625" y="130.6" font-size="13" fill="#3C3489" text-anchor="middle">it</text>
+<text x="625" y="165.6" font-size="13" fill="#5f5e5a" text-anchor="middle"><tspan font-style="italic">h</tspan><tspan font-size="9.36" dy="3.9">t+1</tspan></text>
+</svg>
