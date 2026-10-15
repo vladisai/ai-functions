@@ -33,9 +33,10 @@ if TYPE_CHECKING:
 # what trigger runaway overflow.
 _CHARS_PER_TOKEN: float = 3.5
 
-# Hard cap on summarization attempts per invocation (proactive + reactive
-# combined). Bounds the worst case when every strategy configuration still
-# overflows.
+# Cap on consecutive summarization attempts (proactive + reactive combined)
+# with no successful model reply in between. Bounds the worst case when
+# compaction keeps failing to bring the history under the context window,
+# without limiting how many times a long agent loop can compact.
 _MAX_SUMMARIZATION_ATTEMPTS: int = 3
 
 # System prompt used by the dedicated-summarizer path (when forking is
@@ -427,15 +428,18 @@ class ContextFitter:
     boundary for each compaction.
 
     One instance serves one ``invoke`` call. A shared attempt counter bounds
-    total summarizations per invocation so a strategy that fails to shrink the
-    history cannot loop forever. Do not reuse an instance across invocations:
-    a long-lived counter would starve later cycles of their summarization budget.
+    consecutive summarizations so a strategy that fails to shrink the history
+    cannot loop forever. The counter resets once the model replies after a
+    compaction, i.e. once that compaction worked. One ``invoke`` can be a
+    long agent loop that needs many compactions; only compactions with no
+    model reply in between count toward the cap. Do not reuse an instance
+    across invocations.
 
     Args:
         strategy: The pluggable compaction strategy to run.
         function_name: Owning ``AIFunction`` name, for error attribution.
-        max_attempts: Cap on summarizations per invocation (proactive +
-            reactive combined).
+        max_attempts: Cap on consecutive summarizations (proactive +
+            reactive combined) with no model reply in between.
     """
 
     __slots__ = ("_strategy", "_function_name", "_max_attempts", "_attempts")
@@ -464,6 +468,7 @@ class ContextFitter:
         """
         while True:
             events = await ctx.coordinator.get_events(ctx.thread_id)
+            self._reset_attempts_after_reply(events)
             messages: Messages = reconstruct_messages(events)
             threshold = cycle_config.summarization_threshold
             if (
@@ -496,19 +501,40 @@ class ContextFitter:
         Raises:
             ContextWindowOverflowException: ``summarization_enabled`` is
                 ``False``; the original ``exc`` propagates unchanged.
-            SummarizationFailedError: The attempt cap was already exhausted;
-                chained to ``exc``.
+            SummarizationFailedError: The attempt cap was already exhausted
+                (that many compactions in a row with no model reply in
+                between); chained to ``exc``.
         """
         if not cycle_config.summarization_enabled:
             raise exc
+        fresh_events = await ctx.coordinator.get_events(ctx.thread_id)
+        self._reset_attempts_after_reply(fresh_events)
         if self._attempts >= self._max_attempts:
             raise SummarizationFailedError(
                 function_name=self._function_name,
-                reason=(f"Context window still overflowed after {self._max_attempts} summarization attempts: {exc}"),
+                reason=(
+                    f"Context window still overflowed after {self._max_attempts} consecutive "
+                    f"summarization attempts: {exc}"
+                ),
             ) from exc
         self._attempts += 1
-        fresh_events = await ctx.coordinator.get_events(ctx.thread_id)
         await self._summarize_and_emit(ctx, cycle_config, fresh_events)
+
+    def _reset_attempts_after_reply(self, events: list[Event]) -> None:
+        """Reset the attempt counter if the model replied since the last compaction.
+
+        A reply means the previous compaction brought the history back under
+        the context window, so it no longer counts toward the cap. A model
+        call that fails (e.g. overflows) still logs a
+        ``MessageAssistantCompleteEvent``, but with empty ``content``; that
+        is not a reply.
+        """
+        for event in reversed(events):
+            if isinstance(event, ContextSummarizedEvent):
+                return
+            if isinstance(event, MessageAssistantCompleteEvent) and event.content:
+                self._attempts = 0
+                return
 
     async def _summarize_and_emit(
         self,

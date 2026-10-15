@@ -705,15 +705,15 @@ class AIThread[**P, T](Thread):  # type: ignore[type-arg]
             The completed ``AgentResult``.
 
         Raises:
-            SummarizationFailedError: Every summarization attempt in
-                this invocation failed to bring the history under the
-                context window.
+            SummarizationFailedError: Several summarization attempts
+                in a row failed to bring the history under the context
+                window.
             MaxTokensReachedException: Propagated unchanged;
                 unrecoverable.
         """
-        # Per-invocation fitter: the attempt counter must not outlive this
-        # call, or a long-lived counter would starve later cycles of their
-        # summarization budget.
+        # Per-invocation fitter. Its attempt counter caps consecutive
+        # compactions with no model reply in between, not the total, so a
+        # long agent loop can compact as often as it needs to.
         fitter = ContextFitter(self._summarization_strategy, self._template.name)
         while True:
             messages = await fitter.fit(ctx, cycle_config)

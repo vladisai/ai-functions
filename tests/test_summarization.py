@@ -37,6 +37,7 @@ from ai_functions import (
 from ai_functions.ai_thread.errors import AIFunctionError
 from ai_functions.ai_thread.reconstruction import reconstruct_messages
 from ai_functions.ai_thread.summarization import (
+    _MAX_SUMMARIZATION_ATTEMPTS,
     _SUMMARIZER_TOOL_DENIED_MESSAGE,
     _adjust_split_point_for_tool_pairs,
     _estimate_message_tokens,
@@ -1018,6 +1019,103 @@ async def test_forked_summarizer_tool_call_is_cancelled() -> None:
     first = summaries[0].new_history[0]
     assert isinstance(first, MessageUserEvent)
     assert first.text == "SUM"
+
+
+async def test_compaction_cap_resets_after_the_model_replies() -> None:
+    """One run can compact more times than the attempt cap if the model replies in between.
+
+    The parent runs a tool loop inside a single ``run``: every model call
+    after a compaction succeeds with a tool call, and the call after that
+    overflows. That is 4 compactions in one invocation, more than
+    ``_MAX_SUMMARIZATION_ATTEMPTS``, and each one worked, so the run must
+    finish.
+    """
+    overflows = _MAX_SUMMARIZATION_ATTEMPTS + 1
+
+    @tool
+    def step() -> str:
+        """Do one step of work."""
+        return "stepped"
+
+    class _Model(_RoutingModel):
+        def __init__(self) -> None:
+            super().__init__()
+            self._parent_calls = 0
+
+        def parent_turn(self, messages: Messages) -> Turn:
+            del messages
+            self._parent_calls += 1
+            if self._parent_calls > 2 * overflows:
+                return Turn(text="done")
+            if self._parent_calls % 2 == 1:
+                raise ContextWindowOverflowException("simulated overflow: input is too long")
+            return Turn(tool_calls=(("step", {}),))
+
+    strategy = DefaultSummarizationStrategy(
+        summarize_by_forking=False,
+        preserve_min_messages=1,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+
+    @ai_function[str](
+        structured_output=False,
+        model=cast(Any, _Model()),  # pyright: ignore[reportExplicitAny]
+        summarization_strategy=strategy,
+        tools=[step],
+    )
+    def _ask(q: str) -> str:
+        return q
+
+    async with RuntimeHarness() as h:
+        handle = await h.spawn(_ask)
+        await handle.notify("seed 1")
+        await handle.notify("seed 2")
+        assert (await handle.run("hello")).strip() == "done"
+        events = await h.worker.coordinator.get_events(handle.id)
+
+    summaries = [e for e in events if isinstance(e, ContextSummarizedEvent)]
+    assert len(summaries) == overflows
+
+
+async def test_compaction_cap_stops_consecutive_overflows() -> None:
+    """With no model reply between compactions, the run fails after the attempt cap.
+
+    Every parent call overflows. The summarizer succeeds, but the compacted
+    history never fits, so the fitter must give up after
+    ``_MAX_SUMMARIZATION_ATTEMPTS`` compactions instead of looping.
+    """
+
+    class _Model(_RoutingModel):
+        def parent_turn(self, messages: Messages) -> Turn:
+            del messages
+            raise ContextWindowOverflowException("simulated overflow: input is too long")
+
+    strategy = DefaultSummarizationStrategy(
+        summarize_by_forking=False,
+        preserve_min_messages=1,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+
+    @ai_function[str](
+        structured_output=False,
+        model=cast(Any, _Model()),  # pyright: ignore[reportExplicitAny]
+        summarization_strategy=strategy,
+    )
+    def _ask(q: str) -> str:
+        return q
+
+    async with RuntimeHarness() as h:
+        handle = await h.spawn(_ask)
+        await handle.notify("seed 1")
+        await handle.notify("seed 2")
+        with pytest.raises(SummarizationFailedError, match="summarization attempts"):
+            await handle.run("hello")
+        events = await h.worker.coordinator.get_events(handle.id)
+
+    summaries = [e for e in events if isinstance(e, ContextSummarizedEvent)]
+    assert len(summaries) == _MAX_SUMMARIZATION_ATTEMPTS
 
 
 async def test_proactive_summarization_fires_on_token_threshold() -> None:
