@@ -556,31 +556,26 @@ class SummarizationFailedError(AIFunctionError):
 # ── Tool-denial hook used by the fork path ────────────────────────────────────
 
 
+_SUMMARIZER_TOOL_DENIED_MESSAGE: str = (
+    "Tool execution is disabled in summarization mode. Write the summary as text in your response instead."
+)
+
+
 class _DenyToolsHook(HookProvider):
     """Block tool execution during a summarization cycle."""
 
     def register_hooks(self, registry: HookRegistry, **kwargs: object) -> None:
-        """Register a ``BeforeToolCallEvent`` callback that overrides the result."""
+        """Register a ``BeforeToolCallEvent`` callback that cancels the call."""
         del kwargs
         registry.add_callback(BeforeToolCallEvent, self._on_before_tool_call)
 
     def _on_before_tool_call(self, event: BeforeToolCallEvent) -> None:
-        """Replace the tool result with a canned deny message."""
-        tool_use = cast("dict[str, object]", event.tool_use)
-        tool_use_id = str(tool_use.get("toolUseId", ""))
-        event.selected_tool = None
-        event.result = {  # pyright: ignore[reportAttributeAccessIssue]
-            "toolUseId": tool_use_id,
-            "status": "error",
-            "content": [
-                {
-                    "text": (
-                        "Tool execution is disabled in summarization mode. "
-                        "Write the summary as text in your response instead."
-                    )
-                }
-            ],
-        }
+        """Cancel the tool call; the model gets the message as an error tool result.
+
+        ``cancel_tool`` is the field Strands lets hooks write to skip a tool.
+        ``BeforeToolCallEvent`` has no writable ``result``.
+        """
+        event.cancel_tool = _SUMMARIZER_TOOL_DENIED_MESSAGE
 
 
 # ── Template builders ─────────────────────────────────────────────────────────

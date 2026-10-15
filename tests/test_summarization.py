@@ -23,6 +23,7 @@ from typing import Any, cast
 
 import pytest
 from strands.models import Model
+from strands.tools import tool
 from strands.types.content import Message, Messages, SystemContentBlock
 from strands.types.exceptions import ContextWindowOverflowException, MaxTokensReachedException
 from strands.types.streaming import StreamEvent
@@ -36,6 +37,7 @@ from ai_functions import (
 from ai_functions.ai_thread.errors import AIFunctionError
 from ai_functions.ai_thread.reconstruction import reconstruct_messages
 from ai_functions.ai_thread.summarization import (
+    _SUMMARIZER_TOOL_DENIED_MESSAGE,
     _adjust_split_point_for_tool_pairs,
     _estimate_message_tokens,
 )
@@ -901,6 +903,121 @@ async def test_second_compaction_summarizes_only_the_effective_history(summarize
     assert len(new_history) == 2
     assert isinstance(new_history[0], MessageUserEvent)
     assert new_history[0].text == "SUM-2"
+
+
+class _RoutingModel(Model):
+    """Base for the tests below: routes summarizer calls and parent calls.
+
+    Both summarizer kinds end their input with the summarization instruction
+    (the forked one keeps the parent's system prompt), so a call is a
+    summarizer call when that instruction is in the messages.
+    """
+
+    def update_config(self, **_config: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
+        pass
+
+    def get_config(self) -> dict[str, object]:
+        return {}
+
+    def stream(
+        self,
+        messages: Messages,
+        tool_specs: list[ToolSpec] | None = None,
+        system_prompt: str | None = None,
+        *,
+        tool_choice: ToolChoice | None = None,
+        system_prompt_content: list[SystemContentBlock] | None = None,
+        invocation_state: dict[str, Any] | None = None,  # pyright: ignore[reportExplicitAny]
+        **kwargs: Any,  # pyright: ignore[reportExplicitAny, reportAny]
+    ) -> AsyncIterable[StreamEvent]:
+        del tool_specs, system_prompt, tool_choice, system_prompt_content, invocation_state, kwargs
+        from ai_functions.testing.scripted_model import _stream_turn  # noqa: PLC0415
+
+        texts = [str(b.get("text")) for m in messages for b in m["content"] if "text" in b]
+        if any(t.startswith("Context-management task") for t in texts):
+            return _stream_turn(self.summarizer_turn(messages))
+        return _stream_turn(self.parent_turn(messages))
+
+    def summarizer_turn(self, messages: Messages) -> Turn:
+        del messages
+        return Turn(text="<summary>SUM</summary>")
+
+    def parent_turn(self, messages: Messages) -> Turn:
+        raise NotImplementedError
+
+    def structured_output(self, *args: object, **kwargs: object) -> Any:  # pyright: ignore[reportExplicitAny]
+        del args, kwargs
+        raise NotImplementedError
+
+
+async def test_forked_summarizer_tool_call_is_cancelled() -> None:
+    """A tool call from the forked summarizer is cancelled and the summary still lands.
+
+    The forked summarizer keeps the parent's tools. Its first reply calls one;
+    the deny hook must cancel the call (the tool never runs) and hand the
+    model an error result, after which the model writes the summary.
+    """
+    probe_runs = 0
+    denied: list[dict[str, Any]] = []  # pyright: ignore[reportExplicitAny]
+
+    @tool
+    def probe() -> str:
+        """Return a marker."""
+        nonlocal probe_runs
+        probe_runs += 1
+        return "probed"
+
+    class _Model(_RoutingModel):
+        def __init__(self) -> None:
+            super().__init__()
+            self._parent_calls = 0
+
+        def summarizer_turn(self, messages: Messages) -> Turn:
+            results = [b["toolResult"] for b in messages[-1]["content"] if "toolResult" in b]
+            if not results:
+                return Turn(tool_calls=(("probe", {}),))
+            denied.extend(cast("list[dict[str, Any]]", results))  # pyright: ignore[reportExplicitAny]
+            return Turn(text="<summary>SUM</summary>")
+
+        def parent_turn(self, messages: Messages) -> Turn:
+            del messages
+            self._parent_calls += 1
+            if self._parent_calls == 1:
+                raise ContextWindowOverflowException("simulated overflow: input is too long")
+            return Turn(text="answer")
+
+    strategy = DefaultSummarizationStrategy(
+        summarize_by_forking=True,
+        preserve_min_messages=1,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+
+    @ai_function[str](
+        structured_output=False,
+        model=cast(Any, _Model()),  # pyright: ignore[reportExplicitAny]
+        summarization_strategy=strategy,
+        tools=[probe],
+    )
+    def _ask(q: str) -> str:
+        return q
+
+    async with RuntimeHarness() as h:
+        handle = await h.spawn(_ask)
+        await handle.notify("seed 1")
+        await handle.notify("seed 2")
+        assert (await handle.run("hello")).strip() == "answer"
+        events = await h.worker.coordinator.get_events(handle.id)
+
+    assert probe_runs == 0
+    assert len(denied) == 1
+    assert denied[0]["status"] == "error"
+    assert denied[0]["content"] == [{"text": _SUMMARIZER_TOOL_DENIED_MESSAGE}]
+    summaries = [e for e in events if isinstance(e, ContextSummarizedEvent)]
+    assert len(summaries) == 1
+    first = summaries[0].new_history[0]
+    assert isinstance(first, MessageUserEvent)
+    assert first.text == "SUM"
 
 
 async def test_proactive_summarization_fires_on_token_threshold() -> None:
