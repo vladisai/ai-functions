@@ -212,7 +212,7 @@ def test_split_respects_min_messages() -> None:
         preserve_min_tokens=0,
         preserve_max_tokens=100_000,
     )
-    to_summarize, preserved, _boundary = strategy._split(events)  # noqa: SLF001
+    to_summarize, preserved = strategy._split(events)  # noqa: SLF001
     assert len(preserved) >= 2
     assert len(to_summarize) >= 1
     assert len(to_summarize) + len(preserved) == len(events)
@@ -244,7 +244,7 @@ def test_split_enforces_max_tokens() -> None:
         preserve_min_tokens=0,
         preserve_max_tokens=40_000,
     )
-    to_summarize, preserved, _boundary = strategy._split(events)  # noqa: SLF001
+    to_summarize, preserved = strategy._split(events)  # noqa: SLF001
     # The huge message is NOT in preserved (it exceeds the ceiling once the
     # most-recent "tail" message is already kept).
     for ev in preserved:
@@ -273,7 +273,7 @@ def test_split_preserves_newest_and_shrinks_when_newest_fits() -> None:
         preserve_min_tokens=0,
         preserve_max_tokens=2_000,  # above the small newest turn, below the huge one
     )
-    to_summarize, preserved, _boundary = strategy._split(events)  # noqa: SLF001
+    to_summarize, preserved = strategy._split(events)  # noqa: SLF001
     # The newest message is preserved; the huge older one is summarized.
     assert len(preserved) == 1
     assert isinstance(preserved[0], MessageUserEvent)
@@ -326,6 +326,58 @@ def test_split_two_message_degenerate_case_raises() -> None:
     )
     with pytest.raises(SummarizationFailedError, match="single oversized message"):
         strategy._split(events)  # noqa: SLF001
+
+
+def _texts(events: list[Event] | list[RenderableEvent]) -> list[str]:
+    return [e.text for e in events if isinstance(e, MessageUserEvent)]
+
+
+def test_split_after_prior_summary_cuts_on_effective_timeline() -> None:
+    """A second compaction splits the post-summary history, not the raw event log.
+
+    The raw log still holds every event the earlier summary replaced. The split
+    point is computed over the reconstructed history, so it must be mapped back
+    onto that same history (``new_history`` + newer events); mapping it onto the
+    raw log would place the cut among the replaced events and preserve almost
+    everything.
+    """
+    old = [_mk_user_event(f"old-{i}") for i in range(18)]
+    kept = [_mk_user_event("kept-0"), _mk_user_event("kept-1")]
+    # As produced by ``summarize``: a fresh summary-text event plus the
+    # preserved tail, which are the original log events.
+    summary = ContextSummarizedEvent(thread_id=ThreadId("t1"), new_history=[_mk_user_event("summary-1"), *kept])
+    new = [_mk_user_event(f"new-{i}") for i in range(10)]
+    events: list[Event] = [*old, *kept, summary, *new]
+    strategy = DefaultSummarizationStrategy(
+        preserve_min_messages=2,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+    to_summarize, preserved = strategy._split(events)  # noqa: SLF001
+
+    assert _texts(preserved) == ["new-8", "new-9"]
+    assert _texts(to_summarize) == ["summary-1", "kept-0", "kept-1", *(f"new-{i}" for i in range(8))]
+
+
+def test_split_inside_prior_summary_splits_new_history() -> None:
+    """The cut may fall inside the earlier summary's ``new_history``.
+
+    The summarized side then holds only the first part of ``new_history``, and
+    the rest of it stays in the preserved tail.
+    """
+    old = [_mk_user_event(f"old-{i}") for i in range(2)]
+    kept = [_mk_user_event(f"kept-{i}") for i in range(3)]
+    summary = ContextSummarizedEvent(thread_id=ThreadId("t1"), new_history=[_mk_user_event("summary-1"), *kept])
+    events: list[Event] = [*old, *kept, summary, _mk_user_event("new-0")]
+    strategy = DefaultSummarizationStrategy(
+        preserve_min_messages=3,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+    to_summarize, preserved = strategy._split(events)  # noqa: SLF001
+
+    assert _texts(preserved) == ["kept-1", "kept-2", "new-0"]
+    assert _texts(to_summarize) == ["summary-1", "kept-0"]
 
 
 # ── Tool-pair adjustment helper ───────────────────────────────────────────────
@@ -756,6 +808,99 @@ async def test_summarization_flow_emits_context_summarized_event() -> None:
         first = new_history[0]
         assert isinstance(first, MessageUserEvent)
         assert first.text == "SUM"
+
+
+@pytest.mark.parametrize("summarize_by_forking", [False, True])
+async def test_second_compaction_summarizes_only_the_effective_history(summarize_by_forking: bool) -> None:
+    """Two compactions in one thread: the second summarizer sees only the current history.
+
+    Each run overflows once and compacts. The summarizer model records the
+    messages it is given. The second summarizer must get the first summary plus
+    every newer turn, but none of the turns the first summary replaced, and
+    the new history must keep only the newest turn. Covers both the forked and
+    the dedicated summarizer.
+    """
+    summarizer_inputs: list[list[str]] = []
+
+    from ai_functions.testing.scripted_model import _stream_turn
+
+    class _TwoOverflowsModel(Model):
+        """Parent calls 1 and 3 overflow; the summarizer records its input."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._parent_calls = 0
+
+        def update_config(self, **_config: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
+            pass
+
+        def get_config(self) -> dict[str, object]:
+            return {}
+
+        def stream(
+            self,
+            messages: Messages,
+            tool_specs: list[ToolSpec] | None = None,
+            system_prompt: str | None = None,
+            *,
+            tool_choice: ToolChoice | None = None,
+            system_prompt_content: list[SystemContentBlock] | None = None,
+            invocation_state: dict[str, Any] | None = None,  # pyright: ignore[reportExplicitAny]
+            **kwargs: Any,  # pyright: ignore[reportExplicitAny, reportAny]
+        ) -> AsyncIterable[StreamEvent]:
+            del tool_specs, system_prompt, tool_choice, system_prompt_content, invocation_state, kwargs
+            # Both summarizer kinds end their input with the summarization
+            # instruction; the forked one keeps the parent's system prompt.
+            texts = [str(b.get("text")) for m in messages for b in m["content"] if "text" in b]
+            if texts and texts[-1].startswith("Context-management task"):
+                summarizer_inputs.append(texts)
+                return _stream_turn(Turn(text=f"<summary>SUM-{len(summarizer_inputs)}</summary>"))
+            self._parent_calls += 1
+            if self._parent_calls in (1, 3):
+                raise ContextWindowOverflowException("simulated overflow: input is too long")
+            return _stream_turn(Turn(text=f"answer-{self._parent_calls}"))
+
+        def structured_output(self, *args: object, **kwargs: object) -> Any:  # pyright: ignore[reportExplicitAny]
+            del args, kwargs
+            raise NotImplementedError
+
+    strategy = DefaultSummarizationStrategy(
+        summarize_by_forking=summarize_by_forking,
+        preserve_min_messages=1,
+        preserve_min_tokens=0,
+        preserve_max_tokens=100_000,
+    )
+
+    @ai_function[str](
+        structured_output=False,
+        model=cast(Any, _TwoOverflowsModel()),  # pyright: ignore[reportExplicitAny]
+        summarization_strategy=strategy,
+    )
+    def _ask(q: str) -> str:
+        return q
+
+    async with RuntimeHarness() as h:
+        handle = await h.spawn(_ask)
+        await handle.notify("old-1")
+        await handle.notify("old-2")
+        assert (await handle.run("q1")).strip() == "answer-2"
+        await handle.notify("new-1")
+        await handle.notify("new-2")
+        assert (await handle.run("q2")).strip() == "answer-4"
+        events = await h.worker.coordinator.get_events(handle.id)
+
+    assert len(summarizer_inputs) == 2
+    second = summarizer_inputs[1][:-1]  # drop the summarizer's own instruction turn
+    assert not any(t.startswith("old-") for t in second)
+    assert {"SUM-1", "answer-2", "new-1", "new-2", "q2"} <= set(second)
+
+    summaries = [e for e in events if isinstance(e, ContextSummarizedEvent)]
+    assert len(summaries) == 2
+    # The summary plus the single newest message (preserve_min_messages=1).
+    new_history = summaries[1].new_history
+    assert len(new_history) == 2
+    assert isinstance(new_history[0], MessageUserEvent)
+    assert new_history[0].text == "SUM-2"
 
 
 async def test_proactive_summarization_fires_on_token_threshold() -> None:

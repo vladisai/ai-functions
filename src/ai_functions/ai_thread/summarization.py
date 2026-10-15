@@ -247,13 +247,13 @@ class DefaultSummarizationStrategy:
         )
 
         # 1. Decide what to summarize vs preserve (pure function over events).
-        _, preserved_events, boundary_event_id = self._split(events)
+        to_summarize, preserved_events = self._split(events)
 
         # 2. Run the summarization cycle to produce the summary text.
         summary_text = await self._produce_summary_text(
             ctx=ctx,
             cycle_config=cycle_config,
-            boundary_event_id=boundary_event_id,
+            to_summarize=to_summarize,
             use_forking=use_forking,
         )
 
@@ -267,13 +267,40 @@ class DefaultSummarizationStrategy:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def _split(self, events: list[Event]) -> tuple[list[Event], list[RenderableEvent], str]:
-        """Split events into ``(to_summarize, preserved_tail, boundary_event_id)``."""
+    def _split(self, events: list[Event]) -> tuple[list[RenderableEvent], list[RenderableEvent]]:
+        """Split events into ``(to_summarize, preserved_tail)``.
+
+        The split is computed over the effective timeline that
+        ``reconstruct_messages`` renders: the last ``ContextSummarizedEvent``'s
+        ``new_history`` followed by the events after it, or the raw log when
+        there is no summary yet. Both returned lists hold the renderable
+        events of that timeline, before and after the split.
+        """
         if not events:
             raise SummarizationFailedError(
                 function_name="",
                 reason="cannot summarize an empty event log",
             )
+
+        # Build the *effective* renderable timeline: the last
+        # ContextSummarizedEvent (if any) replaces every earlier event with its
+        # ``new_history``, exactly as ``reconstruct_messages`` does. The
+        # message-index → event mapping below MUST walk this effective list,
+        # not the raw log — walking the raw log would count already-dropped
+        # pre-summary events against ``split_idx``, placing the cut near the
+        # start of the log and "preserving" nearly the entire history (the
+        # tail would then never shrink across compaction passes).
+        summary_idx: int | None = None
+        for i in range(len(events) - 1, -1, -1):
+            if isinstance(events[i], ContextSummarizedEvent):
+                summary_idx = i
+                break
+        if summary_idx is None:
+            effective_events: list[Event] = list(events)
+        else:
+            summary_event = events[summary_idx]
+            assert isinstance(summary_event, ContextSummarizedEvent)
+            effective_events = [*summary_event.new_history, *events[summary_idx + 1 :]]
 
         # Reconstruct the full message list so tail-sizing and tool-pair
         # adjustment share the same representation.
@@ -316,11 +343,9 @@ class DefaultSummarizationStrategy:
 
         split_idx = _adjust_split_point_for_tool_pairs(all_messages, split_idx)
 
-        # Map the message-level split back to an event-level split. The
-        # boundary we report is the id of the last *renderable* event that
-        # remains in the summarized prefix — that is the id the runtime will
-        # use as ``until_event_id`` when seeding the summarizer thread.
-        summarize_prefix_events = _events_producing_prefix(events, split_idx)
+        # Map the message-level split back to an event-level split over the
+        # *effective* timeline, so message indices and event indices agree.
+        summarize_prefix_events = _events_producing_prefix(effective_events, split_idx)
         if not summarize_prefix_events:
             raise SummarizationFailedError(
                 function_name="",
@@ -331,49 +356,26 @@ class DefaultSummarizationStrategy:
                 ),
             )
 
-        # The boundary for worker.spawn_with_history(until_event_id=...) must
-        # be the id of the *last event currently on the source thread* that
-        # should be copied. That is the last element of summarize_prefix_events.
-        last_summarized = summarize_prefix_events[-1]
-        boundary_id = getattr(last_summarized, "id", None)
-        if boundary_id is None:
-            raise SummarizationFailedError(
-                function_name="",
-                reason=(
-                    "summarization prefix ends on an event without an id "
-                    "field; cannot use it as an until_event_id marker"
-                ),
-            )
+        # Both sides keep only renderable events: lifecycle, token usage, etc.
+        # contribute nothing to the rendered history. The prefix is the exact
+        # input the summarizer is seeded with (see ``_produce_summary_text``);
+        # the preserved tail is every effective event after it
+        # (``_events_producing_prefix`` returns a contiguous prefix of its input).
+        to_summarize = [ev for ev in summarize_prefix_events if is_renderable_event(ev)]
+        preserved: list[RenderableEvent] = [
+            ev for ev in effective_events[len(summarize_prefix_events) :] if is_renderable_event(ev)
+        ]
 
-        # Preserved events: every event strictly after the prefix's last
-        # event. We accept any RenderableEvent kind here; non-renderable
-        # events in the tail (lifecycle, token usage, etc.) are filtered
-        # out because they aren't part of the RenderableEvent union anyway.
-        preserved: list[RenderableEvent] = []
-        past_boundary = False
-        for ev in events:
-            if not past_boundary:
-                if getattr(ev, "id", None) == boundary_id:
-                    past_boundary = True
-                continue
-            # Accept only renderable kinds; silently drop non-renderable
-            # events (they wouldn't contribute anything to the rendered
-            # message list anyway and would be rejected by the event type).
-            if is_renderable_event(ev):
-                preserved.append(ev)
-
-        return summarize_prefix_events, preserved, boundary_id
+        return to_summarize, preserved
 
     async def _produce_summary_text(
         self,
         ctx: ThreadContext,
         cycle_config: ThreadConfig,
-        boundary_event_id: str,
+        to_summarize: list[RenderableEvent],
         use_forking: bool,
     ) -> str:
-        """Spawn a summarizer helper and return the ``<summary>`` text."""
-        from ..types import EventId
-
+        """Spawn a summarizer helper seeded with ``to_summarize`` and return the ``<summary>`` text."""
         coordinator = ctx.coordinator
 
         if use_forking:
@@ -382,26 +384,26 @@ class DefaultSummarizationStrategy:
             summarizer_template = _build_dedicated_summarizer_template(cycle_config)
 
         try:
-            # Spawn the helper with a fresh id, then seed its event log
-            # from the source up to ``boundary_event_id`` before the
-            # first cycle runs. We rely on the same worker hosting the
-            # parent (default worker selection in spawn).
+            # Spawn the helper seeded with exactly the events to summarize
+            # (fresh ids, rewritten thread id). Seeding from the prefix rather
+            # than copying the parent's raw log up to some event matters after
+            # an earlier compaction: the prefix may end inside that summary's
+            # ``new_history``, which no raw-log cut point reproduces, and the
+            # raw log still holds every event the summary replaced. We rely on
+            # the same worker hosting the parent (default worker selection in
+            # spawn).
             child_handle = await coordinator.spawn(
                 summarizer_template,
+                seed_events=[*to_summarize],
                 thread_name=f"summarize:{ctx.thread_id}",
                 parent_id=ctx.thread_id,
             )
             try:
-                await coordinator.copy_events(
-                    source_id=ctx.thread_id,
-                    target_id=child_handle.id,
-                    until_event_id=EventId(boundary_event_id),
-                )
                 raw = await child_handle.run()
             finally:
-                # Always tear the helper down, even if copy_events or the
-                # cycle raises — otherwise a spawned-but-failed summarizer
-                # leaks on the coordinator for the life of the session.
+                # Always tear the helper down, even if the cycle raises —
+                # otherwise a spawned-but-failed summarizer leaks on the
+                # coordinator for the life of the session.
                 try:
                     await child_handle.terminate_now()
                 except Exception:
